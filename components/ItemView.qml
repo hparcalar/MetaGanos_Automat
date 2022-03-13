@@ -9,6 +9,86 @@ Item {
     signal moveBack()
     signal moveSpiralView(int itemId)
 
+     // ON LOAD EVENT
+    Component.onCompleted: function(){
+        backend.requestUserData()
+        backend.requestItems()
+    }
+
+    // BACKEND SIGNALS & SLOTS
+    Connections {
+        target: backend
+
+        function onGetUserData(userStr){
+            var userData = JSON.parse(userStr);
+            if (userData){
+                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                txtUserName.text = userData['employeeName'];
+                txtDepartmentName.text = userData['departmentName'];
+            }
+        }
+
+        function onGetItems(data){
+            createItems(JSON.parse(data));
+        }
+    }
+
+    // UI FUNCTIONS
+    function createItems(itemInfo){
+        if (itemInfo){
+            txtItemGroupName.text = itemInfo['groupName'];
+
+            for (let i = 0; i < itemInfo['items'].length; i++) {
+                const itemObj = itemInfo['items'][i];
+                
+                cmpItem.createObject(itemContainer, {
+                    itemId: itemObj['Id'],
+                    itemName: itemObj['ItemName']
+                });
+            }
+        }
+    }
+
+    function selectItem(itemId){
+        moveSpiralView(itemId)
+    }
+
+    // DYNAMIC COMPONENT DEFINITION
+    Component{
+        id: cmpItem
+
+         Button{
+            property int itemId
+            property string itemName
+
+            onClicked: selectItem(itemId)
+            background:Rectangle {
+                border.width: 1
+                border.color: "orange"
+                color: "#fff"
+                radius: 4
+            }
+            contentItem: Label {
+                text:itemName
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Label.Wrap
+            }
+            font.pixelSize: 36
+            font.bold: true
+            height:mainColumn.height / 5
+            width: mainColumn.width / 4
+
+            // Image {
+            //     anchors.centerIn: parent
+            //     sourceSize.height: mainColumn.height / 5 - 10
+            //     sourceSize.width: mainColumn.width / 4 - 10
+            //     fillMode: Image.Stretch
+            //     source: "../asset/item-groups/gloves.jpg"
+            // }
+        }
+    }
+
     Rectangle{
         anchors.fill: parent
         color: "#333333"
@@ -35,6 +115,7 @@ Item {
 
                     // #region USER INFORMATION
                     Text {
+                        id: txtUserName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#333"
@@ -43,10 +124,11 @@ Item {
                         style: Text.Outline
                         styleColor:'orange'
                         font.bold: true
-                        text: "Ahmet Yılmaz"
+                        text: ""
                     }
 
                     Text {
+                        id: txtDepartmentName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -55,10 +137,11 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Bölüm: Boyahane"
+                        text: ""
                     }
 
                     Text {
+                        id: txtUserCode
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -67,7 +150,7 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Sicil: 19867"
+                        text: ""
                     }
                     // #endregion
                 }
@@ -79,6 +162,7 @@ Item {
                 Layout.preferredHeight:60
                 color:"orange"
                 Text {
+                    id: txtItemGroupName
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     color:"#333"
@@ -87,7 +171,7 @@ Item {
                     style: Text.Outline
                     styleColor:'#fff'
                     font.bold: true
-                    text: "ELDİVEN A MARKASI"
+                    text: ""
                 }
             }
 
@@ -98,50 +182,10 @@ Item {
                 color: "transparent"
 
                 Flow{
+                    id: itemContainer
                     width: parent.width
                     padding: 10
                     spacing: 10
-
-                    Button{
-                        id: btn1
-                        onClicked: moveSpiralView(1)
-                        background:Rectangle {
-                            border.width: 1
-                            border.color: "orange"
-                            color: "#fff"
-                            radius: 4
-                        }
-                        contentItem: Label {
-                            text:"A Eldiven 24x24 Large"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Label.Wrap
-                        }
-                        font.pixelSize: 36
-                        font.bold: true
-                        height:mainColumn.height / 5
-                        width: mainColumn.width / 4
-                    }
-
-                    Button{
-                        onClicked: moveSpiralView(2)
-                        background:Rectangle {
-                            border.width: 1
-                            border.color: "orange"
-                            color: "#fff"
-                            radius: 4
-                        }
-                        contentItem: Label {
-                            text:"A Eldiven 12x12 Medium"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Label.Wrap
-                        }
-                        font.pixelSize: 36
-                        font.bold: true
-                        height:mainColumn.height / 5
-                        width: mainColumn.width / 4
-                    }
                 }
             }
 

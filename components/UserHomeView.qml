@@ -2,12 +2,121 @@ import QtQuick 2.14
 import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 import QtQuick.Layouts 1.2
+import QtQuick.Controls.Styles 1.0
+import QtGraphicalEffects 1.0
 
 Item {
-    signal moveItemGroups(int groupId)
+    signal moveItemGroups(int categoryId)
     signal moveQuickDelivery()
     signal moveCardRead()
 
+    // UI FUNCTIONS
+    function userLogout(){
+        backend.requestLogout();
+    }
+
+    function createCategories(categories){
+        if (categories){
+            var perRowCount = categories.length / 2;
+            var dataIndex = 0;
+
+            // fill first row
+            while (dataIndex < perRowCount){
+                if (categories.length <= dataIndex)
+                    break;
+
+                var cat = categories[dataIndex];
+
+                cmpItemCategory.createObject(topCategoryPanel, {
+                    categoryId: cat['Id'],
+                    categoryName: cat['ItemCategoryName'],
+                    categoryImage: cat['CategoryImage'],
+                    perRowCount: perRowCount,
+                })
+                dataIndex++;
+            }
+
+            // fill second row
+            while (dataIndex < categories.length){
+                if (categories.length <= dataIndex)
+                    break;
+
+                var cat = categories[dataIndex];
+
+                cmpItemCategory.createObject(bottomCategoryPanel, {
+                    categoryId: cat['Id'],
+                    categoryName: cat['ItemCategoryName'],
+                    categoryImage: cat['CategoryImage'],
+                    perRowCount: perRowCount,
+                })
+                dataIndex++;
+            }
+        }
+    }
+
+    // ON LOAD EVENT
+    Component.onCompleted: function(){
+        backend.requestUserData()
+        backend.requestItemCategories()
+    }
+
+    // BACKEND SIGNALS & SLOTS
+    Connections {
+        target: backend
+
+        function onGetUserData(userStr){
+            var userData = JSON.parse(userStr);
+            if (userData){
+                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                txtUserName.text = userData['employeeName'];
+                txtDepartmentName.text = userData['departmentName'];
+            }
+        }
+
+        function onUserLoggedOut(){
+            moveCardRead();
+        }
+
+        function onGetItemCategories(data){
+            createCategories(JSON.parse(data));
+        }
+    }
+
+    // CATEGORY COMPONENT
+    Component{
+        id: cmpItemCategory
+
+        Rectangle{
+            property int categoryId
+            property string categoryName
+            property string categoryImage
+            property int perRowCount
+
+            Layout.preferredWidth: mainColumn.width / perRowCount
+            Button{
+                onClicked: moveItemGroups(categoryId)
+                background:Rectangle {
+                    border.width: control.activeFocus ? 2 : 1
+                    border.color: "orange"
+                    color: "#fff"
+                    radius: 4
+                }
+                anchors.centerIn: parent
+                height:mainColumn.height / 5
+                width: mainColumn.width / (perRowCount + 1)
+
+                Image {
+                    anchors.centerIn: parent
+                    sourceSize.height: mainColumn.height / 5 - 10
+                    sourceSize.width: mainColumn.width / (perRowCount + 1) - 10
+                    fillMode: Image.Stretch
+                    source: categoryImage //"../asset/item-groups/helmet.jpg"
+                }
+            }
+        }
+    }
+
+    // PAGE LAYOUT
     Rectangle{
         anchors.fill: parent
         color: "#333333"
@@ -17,6 +126,7 @@ Item {
             anchors.fill: parent
             spacing:5
 
+            // USER INFORMATION PANEL
             Rectangle{
                 Layout.preferredHeight: 170
                 Layout.fillWidth: true
@@ -34,6 +144,7 @@ Item {
 
                     // #region USER INFORMATION
                     Text {
+                        id: txtUserName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#333"
@@ -42,10 +153,11 @@ Item {
                         style: Text.Outline
                         styleColor:'orange'
                         font.bold: true
-                        text: "Ahmet Yılmaz"
+                        text: ""
                     }
 
                     Text {
+                        id: txtDepartmentName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -54,10 +166,11 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Bölüm: Boyahane"
+                        text: ""
                     }
 
                     Text {
+                        id: txtUserCode
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -66,7 +179,7 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Sicil: 19867"
+                        text: ""
                     }
                     // #endregion
                 }
@@ -83,109 +196,111 @@ Item {
                     Layout.fillHeight: true
 
                     RowLayout{
+                        id: topCategoryPanel
                         Layout.fillWidth: true
                         Layout.preferredHeight: mainColumn.height / 3
 
-                        Rectangle{
-                            Layout.preferredWidth: mainColumn.width / 2
-                            Button{
-                                onClicked: moveItemGroups(1)
-                                background:Rectangle {
-                                    border.width: control.activeFocus ? 2 : 1
-                                    border.color: "orange"
-                                    color: "#fff"
-                                    radius: 4
-                                }
-                                anchors.centerIn: parent
-                                height:mainColumn.height / 5
-                                width: mainColumn.width / 3
+                        // Rectangle{
+                        //     Layout.preferredWidth: mainColumn.width / 2
+                        //     Button{
+                        //         onClicked: moveItemGroups(1)
+                        //         background:Rectangle {
+                        //             border.width: control.activeFocus ? 2 : 1
+                        //             border.color: "orange"
+                        //             color: "#fff"
+                        //             radius: 4
+                        //         }
+                        //         anchors.centerIn: parent
+                        //         height:mainColumn.height / 5
+                        //         width: mainColumn.width / 3
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    sourceSize.height: mainColumn.height / 5 - 10
-                                    sourceSize.width: mainColumn.width / 3 - 10
-                                    fillMode: Image.Stretch
-                                    source: "../asset/item-groups/helmet.jpg"
-                                }
-                            }
-                        }
+                        //         Image {
+                        //             anchors.centerIn: parent
+                        //             sourceSize.height: mainColumn.height / 5 - 10
+                        //             sourceSize.width: mainColumn.width / 3 - 10
+                        //             fillMode: Image.Stretch
+                        //             source: "../asset/item-groups/helmet.jpg"
+                        //         }
+                        //     }
+                        // }
 
-                        Rectangle{
-                            Layout.preferredWidth: mainColumn.width / 2
-                            Button{
-                                onClicked: moveItemGroups(2)
-                                background:Rectangle {
-                                    border.width: control.activeFocus ? 2 : 1
-                                    border.color: "orange"
-                                    color: "#fff"
-                                    radius: 4
-                                }
-                                anchors.centerIn: parent
-                                height:mainColumn.height / 5
-                                width: mainColumn.width / 3
+                        // Rectangle{
+                        //     Layout.preferredWidth: mainColumn.width / 2
+                        //     Button{
+                        //         onClicked: moveItemGroups(2)
+                        //         background:Rectangle {
+                        //             border.width: control.activeFocus ? 2 : 1
+                        //             border.color: "orange"
+                        //             color: "#fff"
+                        //             radius: 4
+                        //         }
+                        //         anchors.centerIn: parent
+                        //         height:mainColumn.height / 5
+                        //         width: mainColumn.width / 3
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    sourceSize.height: mainColumn.height / 5 - 10
-                                    sourceSize.width: mainColumn.width / 3 - 10
-                                    fillMode: Image.Stretch
-                                    source: "../asset/item-groups/glass.jpg"
-                                }
-                            }
-                        }
+                        //         Image {
+                        //             anchors.centerIn: parent
+                        //             sourceSize.height: mainColumn.height / 5 - 10
+                        //             sourceSize.width: mainColumn.width / 3 - 10
+                        //             fillMode: Image.Stretch
+                        //             source: "../asset/item-groups/glass.jpg"
+                        //         }
+                        //     }
+                        // }
                     }
 
                     RowLayout{
+                        id: bottomCategoryPanel
                         Layout.fillWidth: true
                         Layout.preferredHeight: mainColumn.height / 4
 
-                        Rectangle{
-                            Layout.preferredWidth: mainColumn.width / 2
-                            Button{
-                                onClicked: moveItemGroups(3)
-                                background:Rectangle {
-                                    border.width: control.activeFocus ? 2 : 1
-                                    border.color: "orange"
-                                    color: "#fff"
-                                    radius: 4
-                                }
-                                anchors.centerIn: parent
-                                height:mainColumn.height / 5
-                                width: mainColumn.width / 3
+                        // Rectangle{
+                        //     Layout.preferredWidth: mainColumn.width / 2
+                        //     Button{
+                        //         onClicked: moveItemGroups(3)
+                        //         background:Rectangle {
+                        //             border.width: control.activeFocus ? 2 : 1
+                        //             border.color: "orange"
+                        //             color: "#fff"
+                        //             radius: 4
+                        //         }
+                        //         anchors.centerIn: parent
+                        //         height:mainColumn.height / 5
+                        //         width: mainColumn.width / 3
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    sourceSize.height: mainColumn.height / 5 - 10
-                                    sourceSize.width: mainColumn.width / 3 - 10
-                                    fillMode: Image.Stretch
-                                    source: "../asset/item-groups/gloves.jpg"
-                                }
-                            }
-                        }
+                        //         Image {
+                        //             anchors.centerIn: parent
+                        //             sourceSize.height: mainColumn.height / 5 - 10
+                        //             sourceSize.width: mainColumn.width / 3 - 10
+                        //             fillMode: Image.Stretch
+                        //             source: "../asset/item-groups/gloves.jpg"
+                        //         }
+                        //     }
+                        // }
 
-                        Rectangle{
-                            Layout.preferredWidth: mainColumn.width / 2
-                            Button{
-                                onClicked: moveItemGroups(4)
-                                background:Rectangle {
-                                    border.width: control.activeFocus ? 2 : 1
-                                    border.color: "orange"
-                                    color: "#fff"
-                                    radius: 4
-                                }
-                                anchors.centerIn: parent
-                                height:mainColumn.height / 5
-                                width: mainColumn.width / 3
+                        // Rectangle{
+                        //     Layout.preferredWidth: mainColumn.width / 2
+                        //     Button{
+                        //         onClicked: moveItemGroups(4)
+                        //         background:Rectangle {
+                        //             border.width: control.activeFocus ? 2 : 1
+                        //             border.color: "orange"
+                        //             color: "#fff"
+                        //             radius: 4
+                        //         }
+                        //         anchors.centerIn: parent
+                        //         height:mainColumn.height / 5
+                        //         width: mainColumn.width / 3
 
-                                Image {
-                                    anchors.centerIn: parent
-                                    sourceSize.height: mainColumn.height / 5 - 10
-                                    sourceSize.width: mainColumn.width / 3 - 10
-                                    fillMode: Image.Stretch
-                                    source: "../asset/item-groups/earplugs.jpg"
-                                }
-                            }
-                        }
+                        //         Image {
+                        //             anchors.centerIn: parent
+                        //             sourceSize.height: mainColumn.height / 5 - 10
+                        //             sourceSize.width: mainColumn.width / 3 - 10
+                        //             fillMode: Image.Stretch
+                        //             source: "../asset/item-groups/earplugs.jpg"
+                        //         }
+                        //     }
+                        // }
                     }
                 }
             }
@@ -199,7 +314,7 @@ Item {
                 // CANCEL BUTTON
                 Button{
                     text: "Vazgeç"
-                    onClicked: moveCardRead()
+                    onClicked: userLogout()
                     anchors.leftMargin:10
                     anchors.left: parent.left
                     anchors.top: parent.top

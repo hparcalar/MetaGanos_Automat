@@ -8,6 +8,81 @@ Item {
     signal moveBack()
     signal showGroupDetail(int groupId)
 
+    // ON LOAD EVENT
+    Component.onCompleted: function(){
+        backend.requestUserData()
+        backend.requestItemGroups()
+    }
+
+    function createGroups(categoryInfo){
+        if (categoryInfo){
+            txtItemCategoryName.text = categoryInfo['categoryName'];
+
+            for (let i = 0; i < categoryInfo['groups'].length; i++) {
+                const group = categoryInfo['groups'][i];
+                
+                cmpGroup.createObject(groupContainer, {
+                    groupId: group['Id'],
+                    groupName: group['ItemGroupName']
+                });
+            }
+        }
+    }
+
+    // BACKEND SIGNALS & SLOTS
+    Connections {
+        target: backend
+
+        function onGetUserData(userStr){
+            var userData = JSON.parse(userStr);
+            if (userData){
+                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                txtUserName.text = userData['employeeName'];
+                txtDepartmentName.text = userData['departmentName'];
+            }
+        }
+
+        function onGetItemGroups(data){
+            createGroups(JSON.parse(data));
+        }
+    }
+
+    // DYNAMIC COMPONENT DEFINITION
+    Component{
+        id: cmpGroup
+
+         Button{
+            property int groupId
+            property string groupName
+
+            onClicked: showGroupDetail(groupId)
+            background:Rectangle {
+                border.width: 1
+                border.color: "orange"
+                color: "#fff"
+                radius: 4
+            }
+            contentItem: Label {
+                text:groupName
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Label.Wrap
+            }
+            font.pixelSize: 36
+            font.bold: true
+            height:mainColumn.height / 5
+            width: mainColumn.width / 4
+
+            // Image {
+            //     anchors.centerIn: parent
+            //     sourceSize.height: mainColumn.height / 5 - 10
+            //     sourceSize.width: mainColumn.width / 4 - 10
+            //     fillMode: Image.Stretch
+            //     source: "../asset/item-groups/gloves.jpg"
+            // }
+        }
+    }
+
     Rectangle{
         anchors.fill: parent
         color: "#333333"
@@ -34,6 +109,7 @@ Item {
 
                     // #region USER INFORMATION
                     Text {
+                        id: txtUserName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#333"
@@ -42,10 +118,11 @@ Item {
                         style: Text.Outline
                         styleColor:'orange'
                         font.bold: true
-                        text: "Ahmet Yılmaz"
+                        text: ""
                     }
 
                     Text {
+                        id: txtDepartmentName
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -54,10 +131,11 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Bölüm: Boyahane"
+                        text: ""
                     }
 
                     Text {
+                        id: txtUserCode
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         color:"#ddd"
@@ -66,7 +144,7 @@ Item {
                         style: Text.Outline
                         styleColor:'black'
                         font.bold: false
-                        text: "Sicil: 19867"
+                        text: ""
                     }
                     // #endregion
                 }
@@ -78,6 +156,7 @@ Item {
                 Layout.preferredHeight:60
                 color:"orange"
                 Text {
+                    id: txtItemCategoryName
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     color:"#333"
@@ -86,7 +165,7 @@ Item {
                     style: Text.Outline
                     styleColor:'#fff'
                     font.bold: true
-                    text: "ELDİVEN"
+                    text: ""
                 }
             }
 
@@ -97,65 +176,10 @@ Item {
                 color: "transparent"
 
                 Flow{
+                    id: groupContainer
                     width: parent.width
                     padding: 10
                     spacing: 10
-
-                    Button{
-                        onClicked: showGroupDetail(1)
-                        background:Rectangle {
-                            border.width: 1
-                            border.color: "orange"
-                            color: "#fff"
-                            radius: 4
-                        }
-                        contentItem: Label {
-                            text:"Eldiven Marka 1"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Label.Wrap
-                        }
-                        font.pixelSize: 36
-                        font.bold: true
-                        height:mainColumn.height / 5
-                        width: mainColumn.width / 4
-
-                        Image {
-                            anchors.centerIn: parent
-                            sourceSize.height: mainColumn.height / 5 - 10
-                            sourceSize.width: mainColumn.width / 4 - 10
-                            fillMode: Image.Stretch
-                            source: "../asset/item-groups/gloves.jpg"
-                        }
-                    }
-
-                    Button{
-                        onClicked: showGroupDetail(2)
-                        background:Rectangle {
-                            border.width: 1
-                            border.color: "orange"
-                            color: "#fff"
-                            radius: 4
-                        }
-                        contentItem: Label {
-                            text:"Eldiven Marka 2"
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            wrapMode: Label.Wrap
-                        }
-                        font.pixelSize: 36
-                        font.bold: true
-                        height:mainColumn.height / 5
-                        width: mainColumn.width / 4
-
-                        Image {
-                            anchors.centerIn: parent
-                            sourceSize.height: mainColumn.height / 5 - 10
-                            sourceSize.width: mainColumn.width / 4 - 10
-                            fillMode: Image.Stretch
-                            source: "../asset/item-groups/gloves.jpg"
-                        }
-                    }
                 }
             }
 

@@ -14,9 +14,36 @@ Item {
     Connections {
         target: backend
 
-        function onGetSpirals(spirals){
-            const spiralDesign = JSON.parse(spirals)
+        function onGetUserData(userStr){
+            var userData = JSON.parse(userStr);
+            if (userData){
+                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                txtUserName.text = userData['employeeName'];
+                txtDepartmentName.text = userData['departmentName'];
+            }
+        }
+
+        function onGetProperSpirals(spirals){
+            const spiralDesign = JSON.parse(spirals);
+            txtItemName.text = spiralDesign['ItemName'];
             createSpirals(spiralDesign.Rows, spiralDesign.Cols, spiralDesign.RelatedSpirals);
+        }
+
+        function onGetActiveCredit(creditInfo){
+            if (creditInfo){
+                const creditObj = JSON.parse(creditInfo);
+                txtRemainingCredit.text = 'Kalan: ' + creditObj['ActiveCredit'].toString();
+            }
+        }
+    }
+
+    function clickSpiral(spiralNo, isRelated){
+        if (isRelated == false){
+            warningDialog.visible = true;
+            tmrWarning.running = true;
+        }
+        else{
+            selectSpiral(spiralNo)
         }
     }
 
@@ -31,16 +58,6 @@ Item {
         }
     }
 
-    function clickSpiral(spiralNo, isRelated){
-        if (isRelated == false){
-            warningDialog.visible = true;
-            tmrWarning.running = true;
-        }
-        else{
-            selectSpiral(spiralNo)
-        }
-    }
-
     MessageDialog {
         id: warningDialog
         title: "HATALI SEÇİM"
@@ -48,6 +65,27 @@ Item {
         icon: StandardIcon.Warning
         onAccepted: {
             warningDialog.visible = false;
+        }
+    }
+
+    // PUSH ITEM ERROR DIALOG
+    Timer {
+        id: tmrPushError
+        interval: 3000
+        repeat: false
+        running: false
+        onTriggered: {
+            pushErrorDialog.visible = false;
+        }
+    }
+
+    MessageDialog {
+        id: pushErrorDialog
+        title: "İLETİŞİM HATASI"
+        text: "ÜRÜN TESLİM EDİLEMEDİ"
+        icon: StandardIcon.Warning
+        onAccepted: {
+            pushErrorDialog.visible = false;
         }
     }
 
@@ -60,7 +98,7 @@ Item {
             property int buttonSize
             property bool isRelated: false
 
-            onClicked: clickSpiral(parseInt(this.text), isRelated)
+            onClicked: clickSpiral(parseInt(buttonText), isRelated)
 
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredHeight: buttonSize
@@ -68,12 +106,12 @@ Item {
 
             background:Rectangle {
                 border.width: 3
-                border.color: "orange"
-                color: isRelated ? "#32CD32" : "#DFDFDF"
+                border.color: isRelated ? "orange" : "transparent"
+                color: isRelated ? "#32CD32" : "transparent"
                 radius: width * 0.5
             }
             contentItem: Label {
-                text: buttonText
+                text: isRelated ? buttonText : ""
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
@@ -87,7 +125,9 @@ Item {
 
     // ON LOAD EVENT
     Component.onCompleted: function(){
-        backend.callSpirals()
+        backend.requestUserData()
+        backend.requestProperSpirals()
+        backend.requestActiveCredit()
     }
 
     // UI FUNCTIONS
@@ -104,7 +144,7 @@ Item {
             spiralCircle.createObject(spiralFlow, { 
                 buttonText: (i + 1).toString(),
                 buttonSize: minimumFit,
-                isRelated: relatedOnes.some(m => m == (i + 1))
+                isRelated: relatedOnes.some(m => parseInt(m['SpiralNo']) == (i + 1))
             });
         }
     }
@@ -141,7 +181,9 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: parent.width / 3 - 20
                         
+                        // #region USER INFORMATION
                         Text {
+                            id: txtUserName
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             color:"#333"
@@ -150,10 +192,11 @@ Item {
                             style: Text.Outline
                             styleColor:'orange'
                             font.bold: true
-                            text: "Ahmet Yılmaz"
+                            text: ""
                         }
 
                         Text {
+                            id: txtDepartmentName
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             color:"#ddd"
@@ -162,10 +205,11 @@ Item {
                             style: Text.Outline
                             styleColor:'black'
                             font.bold: false
-                            text: "Bölüm: Boyahane"
+                            text: ""
                         }
 
                         Text {
+                            id: txtUserCode
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             color:"#ddd"
@@ -174,8 +218,9 @@ Item {
                             style: Text.Outline
                             styleColor:'black'
                             font.bold: false
-                            text: "Sicil: 19867"
+                            text: ""
                         }
+                        // #endregion
                     }
 
                 }
@@ -187,6 +232,7 @@ Item {
                 Layout.preferredHeight:60
                 color:"orange"
                 Text {
+                    id: txtItemName
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     color:"#333"
@@ -195,7 +241,7 @@ Item {
                     style: Text.Outline
                     styleColor:'#fff'
                     font.bold: true
-                    text: "ELDİVEN A 24x24 LARGE"
+                    text: ""
                 }
             }
 
@@ -261,8 +307,8 @@ Item {
 
                 Rectangle{
                     id: itemRationInfo
-                    width: parent.width / 3
-                    anchors.rightMargin:10
+                    width: parent.width / 4
+                    anchors.rightMargin:5
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.topMargin: 5
@@ -278,10 +324,11 @@ Item {
                             style: Text.Outline
                             styleColor:'black'
                             font.bold: true
-                            text: "Aylık İstihkak: 12"
+                            text: "Aylık İstihkak: "
                         }
 
                         Text {
+                            id: txtRemainingCredit
                             width: itemRationInfo.width
                             horizontalAlignment: Text.AlignRight
                             color:"#ddd"
@@ -290,7 +337,7 @@ Item {
                             style: Text.Outline
                             styleColor:'black'
                             font.bold: true
-                            text: "Kalan: 4"
+                            text: "Kalan: "
                         }
                     }
                 }

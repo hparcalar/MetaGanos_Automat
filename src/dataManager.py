@@ -17,7 +17,7 @@ class DataManager():
         try:
             self.connection = sqlite3.connect("data/mg.db")
         except Error as e:
-            print(e)
+            pass
 
     def disconnect(self):
         try:
@@ -169,14 +169,19 @@ class DataManager():
             
             if existingRecord is None:
                 self.connection.execute("""
-                        INSERT INTO ItemCategory(Id, ItemCategoryCode, ItemCategoryName, CategoryImage)
+                        INSERT INTO ItemCategory(Id, ItemCategoryCode, ItemCategoryName, CategoryImage, CreditRangeType, CreditByRange)
                         VALUES("""+ str(category['id']) +""", '""" + category['itemCategoryCode'] + """',
-                        '"""+ category['itemCategoryName'] +"""', '"""+ category['categoryImage'] +"""')""")
+                        '"""+ category['itemCategoryName'] +"""', '"""+ category['categoryImage'] +"""', 
+                            """+ (str(category['creditRangeType']) if category['creditRangeType'] else 'NULL') +""", 
+                            """+ (str(category['creditByRange']) if category['creditByRange'] else 'NULL') +""")""")
             else:
                 self.connection.execute("""
                         UPDATE ItemCategory SET ItemCategoryCode='"""+ category['itemCategoryCode'] +"""',
                             ItemCategoryName='"""+ category['itemCategoryName'] +"""',
-                            CategoryImage='"""+ category['categoryImage'] +"""' WHERE Id="""+ str(category['id']) +"""
+                            CategoryImage='"""+ category['categoryImage'] +"""',
+                            CreditRangeType="""+ (str(category['creditRangeType']) if category['creditRangeType'] else 'NULL') +""",
+                            CreditByRange= """+ (str(category['creditByRange']) if category['creditByRange'] else 'NULL') +""" 
+                            WHERE Id="""+ str(category['id']) +"""
                     """)
 
             self.connection.commit()
@@ -194,7 +199,9 @@ class DataManager():
                     'Id': r[0],
                     'ItemCategoryCode': r[1],
                     'ItemCategoryName': r[2],
-                    'CategoryImage': r[3]
+                    'CategoryImage': r[3],
+                    'CreditRangeType': r[4],
+                    'CreditByRange': r[5],
                 }
         except:
             pass
@@ -212,7 +219,9 @@ class DataManager():
                     'Id': r[0],
                     'ItemCategoryCode': r[1],
                     'ItemCategoryName': r[2],
-                    'CategoryImage': r[3]
+                    'CategoryImage': r[3],
+                    'CreditRangeType': r[4],
+                    'CreditByRange': r[5],
                 })
         except:
             pass
@@ -229,14 +238,15 @@ class DataManager():
             
             if existingRecord is None:
                 self.connection.execute("""
-                        INSERT INTO ItemGroup(Id, ItemGroupCode, ItemGroupName, ItemCategoryId)
+                        INSERT INTO ItemGroup(Id, ItemGroupCode, ItemGroupName, ItemCategoryId, GroupImage)
                         VALUES("""+ str(group['id']) +""", '""" + group['itemGroupCode'] + """',
-                        '"""+ group['itemGroupName'] +"""', """+ str(group['itemCategoryId']) +""")""")
+                        '"""+ group['itemGroupName'] +"""', """+ str(group['itemCategoryId']) +""", '"""+ (group['groupImage'] if group['groupImage'] else '') +"""')""")
             else:
                 self.connection.execute("""
                         UPDATE ItemGroup SET ItemGroupCode='"""+ group['itemGroupCode'] +"""',
                             ItemGroupName='"""+ group['itemGroupName'] +"""',
-                            ItemCategoryId="""+ str(group['itemCategoryId']) +""" WHERE Id="""+ str(group['id']) +"""
+                            ItemCategoryId="""+ str(group['itemCategoryId']) +""", 
+                            GroupImage='"""+ (group['groupImage'] if group['groupImage'] else '') +"""' WHERE Id="""+ str(group['id']) +"""
                     """)
 
             self.connection.commit()
@@ -254,6 +264,7 @@ class DataManager():
                     'Id': r[0],
                     'ItemGroupCode': r[1],
                     'ItemGroupName': r[2],
+                    'GroupImage': r[3],
                     'ItemCategoryId': r[4]
                 }
         except:
@@ -272,6 +283,7 @@ class DataManager():
                     'Id': r[0],
                     'ItemGroupCode': r[1],
                     'ItemGroupName': r[2],
+                    'GroupImage': r[3],
                     'ItemCategoryId': r[4]
                 })
         except:
@@ -352,7 +364,8 @@ class DataManager():
                 self.connection.execute("""
                         INSERT INTO Spiral(Id, SpiralNo, ItemCategoryId, ItemId, ActiveQuantity)
                         VALUES("""+ str(item['id']) +""", '""" + str(item['posOrders']) + """',
-                        """+ str(item['itemCategoryId']) +""", """+ str(item['itemId']) +""", """+ str(item['activeQuantity']) +""")""")
+                        """+ (str(item['itemCategoryId']) if item['itemCategoryId'] else 'NULL') +""", """
+                        + (str(item['itemId']) if item['itemId'] else 'NULL') +""", """+ ( str(item['activeQuantity']) if item['activeQuantity'] else 'NULL' )+""")""")
             self.connection.commit()
         except Exception as e:
             pass
@@ -377,7 +390,25 @@ class DataManager():
         returnData = []
         self.connect()
         try:
-            rows = self.connection.execute("SELECT * FROM Spiral WHERE ItemId = " + str(itemId)).fetchall()
+            rows = self.connection.execute("SELECT * FROM Spiral WHERE ItemId = " + str(itemId) + " AND ActiveQuantity > 0").fetchall()
+            for r in rows:
+                returnData.append({
+                    'Id': r[0],
+                    'SpiralNo': r[1],
+                    'ItemCategoryId': r[2],
+                    'ItemId': r[3],
+                    'ActiveQuantity': r[4]
+                })
+        except Exception as e:
+            pass
+        self.disconnect()
+        return returnData
+
+    def getAllSpirals(self):
+        returnData = []
+        self.connect()
+        try:
+            rows = self.connection.execute("SELECT * FROM Spiral ORDER BY SpiralNo").fetchall()
             for r in rows:
                 returnData.append({
                     'Id': r[0],
@@ -404,7 +435,6 @@ class DataManager():
                         """+ str(item['itemCategoryId']) +""", NULL, NULL, """+ str(item['activeCredit']) +""")""")
             self.connection.commit()
         except Exception as e:
-            print(e)
             pass
         self.disconnect()
 

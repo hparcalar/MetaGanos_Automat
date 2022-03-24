@@ -32,6 +32,7 @@ Item {
                     categoryName: cat['ItemCategoryName'],
                     categoryImage: cat['CategoryImage'],
                     perRowCount: perRowCount,
+                    activeCredit: cat['ActiveCredit'],
                 })
                 dataIndex++;
             }
@@ -47,6 +48,7 @@ Item {
                     categoryId: cat['Id'],
                     categoryName: cat['ItemCategoryName'],
                     categoryImage: cat['CategoryImage'],
+                    activeCredit: cat['ActiveCredit'],
                     perRowCount: perRowCount,
                 })
                 dataIndex++;
@@ -91,6 +93,7 @@ Item {
             property string categoryName
             property string categoryImage
             property int perRowCount
+            property int activeCredit
 
             Layout.preferredWidth: mainColumn.width / perRowCount
             Button{
@@ -110,7 +113,19 @@ Item {
                     sourceSize.height: mainColumn.height / 5 - 10
                     sourceSize.width: mainColumn.width / (perRowCount + 1) - 10
                     fillMode: Image.Stretch
-                    source: categoryImage //"../asset/item-groups/helmet.jpg"
+                    source: categoryImage
+                }
+
+                Label{
+                    color: "orange"
+                    anchors.bottom: parent.bottom
+                    anchors.top: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    horizontalAlignment: Text.AlignHCenter 
+                    text: activeCredit.toString() + ' Adet'
+                    font.bold: true
+                    font.pixelSize: 36
                 }
             }
         }

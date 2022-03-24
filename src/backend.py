@@ -52,8 +52,10 @@ class BackendManager(QObject):
     getItemGroups = Signal(str)
     getItems = Signal(str)
     getProperSpirals = Signal(str)
+    getAllSpirals = Signal(str)
     getPushSpiralResult = Signal(str)
     getActiveCredit = Signal(str)
+    getCredit = Signal(str)
 
 
     # MODBUS HANDLERS
@@ -78,6 +80,7 @@ class BackendManager(QObject):
         self.cardKey += readText
         self.cardKeyLastRead = datetime.datetime.now()
         if not self.cardThreadAlive:
+            self.cardKey = readText
             self.cardKeyThread = Thread(target=self.__cardReadLoop)
             self.cardKeyThread.start()
 
@@ -90,6 +93,7 @@ class BackendManager(QObject):
             self.cardLoggedIn.emit(loginResult)
             self.cardKey = ''
         self.cardThreadAlive = False
+        self.cardKey = ''
 
     @Slot()
     def requestUserData(self):
@@ -120,6 +124,13 @@ class BackendManager(QObject):
     def requestItemCategories(self):
         data = self.dbManager.getItemCategories()
         if data:
+            for d in data:
+                creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], int(d['Id']))
+                if creditInfo:
+                    d['ActiveCredit'] = creditInfo['ActiveCredit']
+                else:
+                    d['ActiveCredit'] = 0
+
             self.getItemCategories.emit(json.dumps(data))
 
 
@@ -148,7 +159,10 @@ class BackendManager(QObject):
             itemsData = self.dbManager.getItems(self.stateManager.selectedGroupId)
             if itemsData:
                 groupObj = self.dbManager.getItemGroup(self.stateManager.selectedGroupId)
-                self.getItems.emit(json.dumps({ 'groupName': groupObj['ItemGroupName'], 'items': itemsData }))
+                self.getItems.emit(json.dumps({ 
+                    'groupName': groupObj['ItemGroupName'], 
+                    'groupImage': groupObj['GroupImage'],
+                    'items': itemsData }))
 
 
     @Slot(int)
@@ -162,7 +176,8 @@ class BackendManager(QObject):
             "Rows": 0,
             "Cols": 0,
             "RelatedSpirals": [],
-            "ItemName": ""
+            "ItemName": "",
+            "AllSpirals": [],
         }
 
         machineContent = self.dbManager.getMachineConfig()
@@ -179,7 +194,33 @@ class BackendManager(QObject):
             if spiralData and len(spiralData) > 0:
                 spiralDesign["RelatedSpirals"] = spiralData
 
+            allSpirals = self.dbManager.getAllSpirals()
+            if allSpirals:
+                spiralDesign['AllSpirals'] = allSpirals
+
         self.getProperSpirals.emit(json.dumps(spiralDesign))
+
+
+    @Slot()
+    def requestAllSpirals(self):
+        spiralDesign = {
+            "Rows": 0,
+            "Cols": 0,
+            "RelatedSpirals": [],
+            "ItemName": "",
+            "AllSpirals": [],
+        }
+
+        machineContent = self.dbManager.getMachineConfig()
+        if machineContent:
+            spiralDesign["Rows"] = int(machineContent['Rows'])
+            spiralDesign["Cols"] = int(machineContent['Cols'])
+
+        allSpirals = self.dbManager.getAllSpirals()
+        if allSpirals:
+            spiralDesign['AllSpirals'] = allSpirals
+
+        self.getAllSpirals.emit(json.dumps(spiralDesign))
 
 
     @Slot(int)
@@ -194,14 +235,15 @@ class BackendManager(QObject):
             if spiralInfo is None:
                 raise Exception("Spiral bilgisi bulunamadı.")
 
-            hasRights = self.dbManager.checkEmployeeHasCredit(int(self.stateManager.userData['id']), int(spiralInfo['ItemCategoryId']))
+            hasRights = self.dbManager.checkEmployeeHasCredit(int(self.stateManager.userData['id']), 
+                int(spiralInfo['ItemCategoryId']) if spiralInfo['ItemCategoryId'] else 0)
             if not hasRights:
                 raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")
             else:
                 tryCount = 0
                 pushResult = self.modbusManager.pushItem(spiralNo)
                 while pushResult == False and tryCount < 3:
-                    sleep(2)
+                    sleep(1)
                     pushResult = self.modbusManager.pushItem(spiralNo)
                     tryCount = tryCount + 1
 
@@ -228,4 +270,31 @@ class BackendManager(QObject):
             creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], 
                 self.stateManager.selectedCategoryId)
             if creditInfo:
+                ctgInfo = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
+                if ctgInfo:
+                    rangeDesc = ''
+                    rangeCredit = 0
+
+                    if ctgInfo['CreditRangeType'] == 1:
+                        rangeDesc = 'Günlük'
+                    elif ctgInfo['CreditRangeType'] == 2:
+                        rangeDesc = 'Haftalık'
+                    elif ctgInfo['CreditRangeType'] == 3:
+                        rangeDesc = 'Aylık'
+
+                    rangeCredit = int(ctgInfo['CreditByRange']) if ctgInfo['CreditByRange'] else 0
+                    creditInfo['CreditRange'] = {
+                        'RangeType': rangeDesc,
+                        'RangeCredit': rangeCredit,
+                    }
+
                 self.getActiveCredit.emit(json.dumps(creditInfo))
+
+
+    @Slot(int)
+    def requestCredit(self, itemCategoryId):
+        if itemCategoryId > 0:
+            creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'],
+                itemCategoryId)
+            if creditInfo:
+                self.getCredit.emit(json.dumps(creditInfo))

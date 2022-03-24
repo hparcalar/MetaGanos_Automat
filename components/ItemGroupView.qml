@@ -23,7 +23,8 @@ Item {
                 
                 cmpGroup.createObject(groupContainer, {
                     groupId: group['Id'],
-                    groupName: group['ItemGroupName']
+                    groupName: group['ItemGroupName'],
+                    groupImage: group['GroupImage'],
                 });
             }
         }
@@ -54,6 +55,7 @@ Item {
          Button{
             property int groupId
             property string groupName
+            property string groupImage
 
             onClicked: showGroupDetail(groupId)
             background:Rectangle {
@@ -67,19 +69,27 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
+                style: Text.Outline
+                styleColor:'orange'
             }
             font.pixelSize: 36
             font.bold: true
             height:mainColumn.height / 5
             width: mainColumn.width / 4
 
-            // Image {
-            //     anchors.centerIn: parent
-            //     sourceSize.height: mainColumn.height / 5 - 10
-            //     sourceSize.width: mainColumn.width / 4 - 10
-            //     fillMode: Image.Stretch
-            //     source: "../asset/item-groups/gloves.jpg"
-            // }
+            Image {
+                visible: groupImage != null && groupImage.length > 0
+                opacity: 0.5
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 10
+                sourceSize.width: parent.width / 4
+                sourceSize.height: parent.height / 4
+                
+                fillMode: Image.PreserveAspectFit
+                source: groupImage
+            }
         }
     }
 

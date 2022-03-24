@@ -78,7 +78,7 @@ Item {
                         signal onCardRead
                         objectName: "cardReadButton"
                         anchors.fill: parent
-                        // onClicked: moveNextStep()
+                        onClicked: moveNextStep()
                     }
                 }
             }

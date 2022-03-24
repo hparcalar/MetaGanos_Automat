@@ -46,7 +46,9 @@ class DataMigrator():
                     Id INT PRIMARY KEY,
                     ItemCategoryCode NVARCHAR(200),
                     ItemCategoryName NVARCHAR(200),
-                    CategoryImage TEXT
+                    CategoryImage TEXT,
+                    CreditRangeType INT,
+                    CreditByRange INT
                 )
             """,
             """

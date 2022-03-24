@@ -18,6 +18,25 @@ Item {
             txtSpiralNo.text += padValue;
     }
 
+    // ON LOAD EVENT
+    Component.onCompleted: function(){
+        backend.requestUserData()
+    }
+
+    // BACKEND SIGNALS & SLOTS
+    Connections {
+        target: backend
+
+        function onGetUserData(userStr){
+            var userData = JSON.parse(userStr);
+            if (userData){
+                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                txtUserName.text = userData['employeeName'];
+                txtDepartmentName.text = userData['departmentName'];
+            }
+        }
+    }
+
     Component{
         id: numpadStyle
         Rectangle {
@@ -51,47 +70,58 @@ Item {
                     GradientStop {position: 1.000;color: "#333";}
                 }
 
-                ColumnLayout{
+                GridLayout{
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    rows: 1
+                    columns: 1
+                    
+                    ColumnLayout{
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: parent.width / 3 - 20
+                        
+                        // #region USER INFORMATION
+                        Text {
+                            id: txtUserName
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            color:"#333"
+                            padding: 2
+                            font.pixelSize: 48
+                            style: Text.Outline
+                            styleColor:'orange'
+                            font.bold: true
+                            text: ""
+                        }
 
-                    // #region USER INFORMATION
-                    Text {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        color:"#333"
-                        padding: 2
-                        font.pixelSize: 48
-                        style: Text.Outline
-                        styleColor:'orange'
-                        font.bold: true
-                        text: "Ahmet Yılmaz"
+                        Text {
+                            id: txtDepartmentName
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            color:"#ddd"
+                            padding: 2
+                            font.pixelSize: 36
+                            style: Text.Outline
+                            styleColor:'black'
+                            font.bold: false
+                            text: ""
+                        }
+
+                        Text {
+                            id: txtUserCode
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            color:"#ddd"
+                            padding: 2
+                            font.pixelSize: 36
+                            style: Text.Outline
+                            styleColor:'black'
+                            font.bold: false
+                            text: ""
+                        }
+                        // #endregion
                     }
 
-                    Text {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        color:"#ddd"
-                        padding: 2
-                        font.pixelSize: 36
-                        style: Text.Outline
-                        styleColor:'black'
-                        font.bold: false
-                        text: "Bölüm: Boyahane"
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        color:"#ddd"
-                        padding: 2
-                        font.pixelSize: 36
-                        style: Text.Outline
-                        styleColor:'black'
-                        font.bold: false
-                        text: "Sicil: 19867"
-                    }
-                    // #endregion
                 }
             }
 

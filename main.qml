@@ -87,13 +87,15 @@ ApplicationWindow {
         function onGetPushSpiralResult(spiralInfo){
             var pushResult = JSON.parse(spiralInfo);
             if (pushResult.Result == true){
-                stack.replace(spiralView, endDelivery)
+                popupLoading.close();
+                stack.replace(stack.currentItem, endDelivery)
             }
             else
             {
-                pushErrorDialog.text = pushResult.ErrorMessage;
-                pushErrorDialog.visible = true;
-                tmrPushError.running = true;
+                txtProcessResult.text = pushResult.ErrorMessage;
+                // pushErrorDialog.text = pushResult.ErrorMessage;
+                // pushErrorDialog.visible = true;
+                // tmrPushError.running = true;
             }
         }
     }
@@ -101,10 +103,23 @@ ApplicationWindow {
     // ON LOAD EVENTS & UI FUNCTIONS
     Component.onCompleted: function(){
         backend.checkMachineConfig()
+        //keyListenerRect.focus();
     }
 
     function showConfigView(){
         stack.replace(stack.currentItem, machineConfig)
+    }
+
+    Timer {
+        id: tmrDelayHandler
+    }
+
+    function delay(delayTime, cb) {
+        tmrDelayHandler.stop();
+        tmrDelayHandler.interval = delayTime;
+        tmrDelayHandler.repeat = false;
+        tmrDelayHandler.triggered.connect(cb);
+        tmrDelayHandler.start();
     }
 
     // COMPONENT DECLARATIONS
@@ -115,6 +130,9 @@ ApplicationWindow {
         MachineConfigView{
             onCompleted: function(){
                 stack.replace(machineConfig, cardRead)
+            }
+            onMoveServiceView: function(){
+                stack.replace(stack.currentItem, serviceView);
             }
         }
     }
@@ -135,7 +153,8 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                stack.replace(cardRead, userHome)
+                backend.cardReading('0477467401049');
+                // stack.replace(cardRead, userHome)
             }
         }
     }
@@ -193,7 +212,15 @@ ApplicationWindow {
                 stack.replace(spiralView, itemsView)
             }
             onSelectSpiral: function(spiralNo){
-                backend.requestPushSpiral(parseInt(spiralNo))
+                txtProcessResult.text = '';
+                popupLoading.open();
+                delay(500, function(){
+                    try{
+                        backend.requestPushSpiral(parseInt(spiralNo));
+                    } catch(err){
+
+                    }
+                });
             }
         }
     }
@@ -216,21 +243,93 @@ ApplicationWindow {
                 stack.replace(quickDelivery, userHome)
             }
             onConfirmQuickDelivery: function(spiralNo){
-                console.log('Selected spiral no: ' + spiralNo);
-                stack.replace(quickDelivery, endDelivery)
+                txtProcessResult.text = '';
+                popupLoading.open();
+                delay(500, function(){
+                    try {
+                        backend.requestPushSpiral(parseInt(spiralNo));
+                    } catch(err){
+
+                    }
+                });
             }
+        }
+    }
+
+    // BUSY INDICATOR
+    Popup {
+        id: popupLoading
+        modal: true
+        dim: true
+        Overlay.modal: Rectangle {
+            color: "#aacfdbe7"
+        }
+
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        width: 300
+        height: 300
+
+        Label{
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            text:'İşleminiz Gerçekleştiriliyor'
+            font.bold: true
+        }
+
+        BusyIndicator {
+            id: loadingIndicator
+            anchors.centerIn: parent
+            running: true
+        }
+
+        Label{
+            anchors.top: loadingIndicator.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            color:'red'
+            id: txtProcessResult
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            anchors.topMargin: 10
+            wrapMode: Label.Wrap
+            text:''
+            font.bold: true
+        }
+
+        Button{
+            text: "TAMAM"
+            visible: txtProcessResult.text.length > 0
+            onClicked: function(){
+                popupLoading.close();
+            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: txtProcessResult.bottom
+            anchors.topMargin: 10
+            id:control
+            font.pixelSize: 24
+            font.bold: true
+            padding: 5
         }
     }
 
     // MAIN LAYOUT
     Rectangle{
+        id:keyListenerRect
+        
         anchors.fill: parent
         color: "#c8cacc"
         focus: true
         Keys.onPressed: {
-            if (stack.currentItem.toString().indexOf('CardReadView') > -1){
-                if (event.text.match(/^[a-z0-9]+$/i))
-                    backend.cardReading(event.text)
+            try {
+                if (stack.currentItem.toString().indexOf('CardReadView') > -1){
+                    let readVal = event.text.match(/^[a-z0-9]+/i);
+                    if (readVal && readVal.length > 0)
+                        backend.cardReading(readVal);
+                }
+            } catch (error) {
+                backend.cardReading(event.text);
             }
         }
 

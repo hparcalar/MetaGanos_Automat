@@ -8,6 +8,7 @@ import QtGraphicalEffects 1.0
 
 Item {
     signal completed()
+    signal moveServiceView()
 
     // BACKEND SIGNALS & SLOTS
     Connections {
@@ -366,6 +367,30 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 80
                 color:"#22FFA500"
+
+                 // GOTO SERVICE BUTTON
+                Button{
+                    anchors.leftMargin:10
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    onClicked: moveServiceView()
+                    text: "SERVİS"
+                    id:serviceButton
+                    font.pixelSize: 36
+                    font.bold: true
+                    padding: 10
+                    palette.buttonText: "#fefefe"
+                    background: Rectangle {
+                        border.width: serviceButton.activeFocus ? 2 : 1
+                        border.color: "green"
+                        radius: 4
+                        gradient: Gradient {
+                            GradientStop { position: 0 ; color: serviceButton.pressed ? "blue" : "#dedede" }
+                            GradientStop { position: 1 ; color: serviceButton.pressed ? "#dedede" : "blue" }
+                        }
+                    }
+                }
 
                 // CONFIRM BUTTON
                 Button{

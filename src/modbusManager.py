@@ -57,11 +57,15 @@ class ModbusManager():
                 client.connect()
             
             # check is ready bit
+            waitingForReady = 0
             while self.__readCoils(client, 35) == False:
                 sleep(0.5)
+                waitingForReady = waitingForReady + 0.5
+                if waitingForReady >= 4:
+                    return False
 
             # pick spiral
-            self.__writeRegisters(client, 52)
+            self.__writeRegisters(client, int(spiralNo))
 
             # move arm
             self.__writeCoils(client, 31, [1]) # is working bit launches True (36)

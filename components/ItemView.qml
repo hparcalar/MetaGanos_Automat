@@ -43,6 +43,7 @@ Item {
                 
                 cmpItem.createObject(itemContainer, {
                     itemId: itemObj['Id'],
+                    groupImage: itemInfo['groupImage'],
                     itemName: itemObj['ItemName']
                 });
             }
@@ -60,6 +61,7 @@ Item {
          Button{
             property int itemId
             property string itemName
+            property string groupImage
 
             onClicked: selectItem(itemId)
             background:Rectangle {
@@ -79,13 +81,19 @@ Item {
             height:mainColumn.height / 5
             width: mainColumn.width / 4
 
-            // Image {
-            //     anchors.centerIn: parent
-            //     sourceSize.height: mainColumn.height / 5 - 10
-            //     sourceSize.width: mainColumn.width / 4 - 10
-            //     fillMode: Image.Stretch
-            //     source: "../asset/item-groups/gloves.jpg"
-            // }
+            Image {
+                visible: groupImage != null && groupImage.length > 0
+                opacity: 0.5
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 10
+                sourceSize.width: parent.width / 4
+                sourceSize.height: parent.height / 4
+                
+                fillMode: Image.PreserveAspectFit
+                source: groupImage
+            }
         }
     }
 

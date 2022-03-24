@@ -82,7 +82,14 @@ class ApiManager():
             if resp.status_code == 200:
                 data = resp.json()
                 for d in data:
-                    self.dbManager.saveItemGroup(d)
+                    try:
+                        respDetail = requests.get(self.apiUri + 'ItemGroup/' + str(d['id']),
+                            headers={ "Authorization": "Bearer " + self.token })
+                        if respDetail.status_code == 200:
+                            detailObj = respDetail.json()
+                            self.dbManager.saveItemGroup(detailObj)
+                    except:
+                        pass
         except Exception as e:
             pass
 

@@ -26,13 +26,22 @@ Item {
         function onGetProperSpirals(spirals){
             const spiralDesign = JSON.parse(spirals);
             txtItemName.text = spiralDesign['ItemName'];
-            createSpirals(spiralDesign.Rows, spiralDesign.Cols, spiralDesign.RelatedSpirals);
+            createSpirals(spiralDesign.Rows, spiralDesign.Cols, spiralDesign.RelatedSpirals, spiralDesign.AllSpirals);
         }
 
         function onGetActiveCredit(creditInfo){
             if (creditInfo){
                 const creditObj = JSON.parse(creditInfo);
-                txtRemainingCredit.text = 'Kalan: ' + creditObj['ActiveCredit'].toString();
+
+                const rangeObj = creditObj['CreditRange'];
+                if (rangeObj && rangeObj['RangeType'].length > 0){
+                    txtRangeOfCredit.text = rangeObj['RangeType'] + ' İstihkak: ' + rangeObj['RangeCredit'];
+                    pnlRangeOfCredit.visible = true;
+                }
+                else
+                    pnlRangeOfCredit.visible = false;
+
+                txtRemainingCredit.text = 'Kalan İstihkak: ' + creditObj['ActiveCredit'].toString();
             }
         }
     }
@@ -66,7 +75,7 @@ Item {
         onAccepted: {
             warningDialog.visible = false;
         }
-    }
+    }   
 
     // PUSH ITEM ERROR DIALOG
     Timer {
@@ -89,7 +98,7 @@ Item {
         }
     }
 
-    // SPIRAL CIRCLE VISUAL COMPONENT
+    // SPIRAL CIRCLE DYNAMIC COMPONENT
     Component{
         id: spiralCircle
 
@@ -115,8 +124,8 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
+                fontSizeMode: Text.Fit
             }
-            font.pixelSize: 36
             font.bold: true
             height: buttonSize
             width: buttonSize
@@ -131,7 +140,7 @@ Item {
     }
 
     // UI FUNCTIONS
-    function createSpirals(rows, cols, relatedOnes){
+    function createSpirals(rows, cols, relatedOnes, allSpirals){
         spiralFlow.rows = rows;
         spiralFlow.columns = cols;
 
@@ -140,12 +149,19 @@ Item {
         if (minimumFit > widthFit)
             minimumFit = widthFit
 
+        let spiralIndex = 0;
         for (let i = 0; i < rows * cols; i++) {
-            spiralCircle.createObject(spiralFlow, { 
-                buttonText: (i + 1).toString(),
-                buttonSize: minimumFit,
-                isRelated: relatedOnes.some(m => parseInt(m['SpiralNo']) == (i + 1))
-            });
+            try {
+                var spiralData = allSpirals[spiralIndex];
+                spiralCircle.createObject(spiralFlow, { 
+                    buttonText: spiralData['SpiralNo'].toString(),
+                    buttonSize: minimumFit,
+                    isRelated: relatedOnes.some(m => parseInt(m['SpiralNo']) == parseInt(spiralData['SpiralNo']))
+                });
+            } catch (error) {
+                
+            }
+            spiralIndex++;
         }
     }
 
@@ -264,6 +280,46 @@ Item {
                 }
             }
 
+            // CREDIT INFORMATION PANEL
+            Rectangle{
+                id: pnlRangeOfCredit
+                Layout.fillWidth: true
+                Layout.preferredHeight: 60
+                color:"#c8cacc"
+
+                Text {
+                    id: txtRangeOfCredit
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    color:"#333"
+                    padding: 2
+                    font.pixelSize: 48
+                    style: Text.Outline
+                    styleColor:'#fff'
+                    font.bold: true
+                    text: "Aylık İstihkak: 20"
+                }
+            }
+
+            Rectangle{
+                Layout.fillWidth: true
+                Layout.preferredHeight: 60
+                color:"#52c908"
+
+                Text {
+                    id: txtRemainingCredit
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    color:"#333"
+                    padding: 2
+                    font.pixelSize: 48
+                    style: Text.Outline
+                    styleColor:'#fff'
+                    font.bold: true
+                    text: "Kalan: "
+                }
+            }
+
             // VIEW ACTION BUTTONS
             Rectangle{
                 Layout.fillWidth: true
@@ -302,43 +358,6 @@ Item {
                         sourceSize.height: 50
                         fillMode: Image.Stretch
                         source: "../asset/back.png"
-                    }
-                }
-
-                Rectangle{
-                    id: itemRationInfo
-                    width: parent.width / 4
-                    anchors.rightMargin:5
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    anchors.topMargin: 5
-                    Layout.alignment: Qt.AlignRight
-
-                    ColumnLayout{
-                        Text {
-                            width: itemRationInfo.width
-                            horizontalAlignment: Text.AlignRight
-                            color:"#ddd"
-                            padding: 2
-                            font.pixelSize: 22
-                            style: Text.Outline
-                            styleColor:'black'
-                            font.bold: true
-                            text: "Aylık İstihkak: "
-                        }
-
-                        Text {
-                            id: txtRemainingCredit
-                            width: itemRationInfo.width
-                            horizontalAlignment: Text.AlignRight
-                            color:"#ddd"
-                            padding: 2
-                            font.pixelSize: 22
-                            style: Text.Outline
-                            styleColor:'black'
-                            font.bold: true
-                            text: "Kalan: "
-                        }
                     }
                 }
             }

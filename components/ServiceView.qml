@@ -14,33 +14,26 @@ Item {
     Connections {
         target: backend
 
-        function onGetSpirals(spirals){
-            const spiralDesign = JSON.parse(spirals)
-            createSpirals(spiralDesign.Rows, spiralDesign.Cols);
+        function onGetAllSpirals(spirals){
+            const spiralDesign = JSON.parse(spirals);
+            createSpirals(spiralDesign.Rows, spiralDesign.Cols, spiralDesign.AllSpirals);
         }
     }
 
     function clickSpiral(spiralNo){
         console.log(spiralNo);
-        // if (isRelated == false){
-        //     warningDialog.visible = true;
-        //     tmrWarning.running = true;
-        // }
-        // else{
-        //     console.log(spiralNo)
-        //     // backend.selectSpiral(spiralNo)
-        // }
     }
 
-    // SPIRAL CIRCLE VISUAL COMPONENT
+    // SPIRAL CIRCLE DYNAMIC COMPONENT
     Component{
         id: spiralCircle
 
         Button{
             property string buttonText
             property int buttonSize
+            property bool isRelated: false
 
-            onClicked: clickSpiral(parseInt(this.text))
+            onClicked: clickSpiral(parseInt(buttonText), isRelated)
 
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredHeight: buttonSize
@@ -49,7 +42,7 @@ Item {
             background:Rectangle {
                 border.width: 3
                 border.color: "orange"
-                color: "#EFEFEF"
+                color: "#32CD32"
                 radius: width * 0.5
             }
             contentItem: Label {
@@ -57,34 +50,42 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
+                fontSizeMode: Text.Fit
             }
-            font.pixelSize: 36
             font.bold: true
             height: buttonSize
             width: buttonSize
         }
     }
 
-    // ON LOAD EVENT
+   // ON LOAD EVENT
     Component.onCompleted: function(){
-        backend.callSpirals()
+        backend.requestAllSpirals()
     }
 
     // UI FUNCTIONS
-    function createSpirals(rows, cols){
+    function createSpirals(rows, cols, spiralsData){
         spiralFlow.rows = rows;
         spiralFlow.columns = cols;
 
         let minimumFit = (flowRect.height) / (rows + 1)
         let widthFit = (flowRect.width) / (cols + 1)
         if (minimumFit > widthFit)
-            minimumFit = widthFit
+            minimumFit = widthFit;
 
+        let spiralIndex = 0;
         for (let i = 0; i < rows * cols; i++) {
-            spiralCircle.createObject(spiralFlow, { 
-                buttonText: (i + 1).toString(),
-                buttonSize: minimumFit,
-            });
+            try {
+                var spiralData = spiralsData[spiralIndex];
+                spiralCircle.createObject(spiralFlow, { 
+                    buttonText: spiralData['SpiralNo'].toString(),
+                    buttonSize: minimumFit,
+                    isRelated: false,
+                });
+            } catch (error) {
+                
+            }
+            spiralIndex++;
         }
     }
 

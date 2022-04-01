@@ -85,7 +85,11 @@ class DataMigrator():
                     ItemCategoryId INT,
                     ItemGroupId INT NULL,
                     ItemId INT NULL,
-                    ActiveCredit INT
+                    ActiveCredit INT,
+                    RangeType INT,
+                    RangeLength INT,
+                    CreditByRange INT,
+                    RangeCredit INT
                 )
             """,
             """

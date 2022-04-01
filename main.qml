@@ -231,6 +231,7 @@ ApplicationWindow {
         EndDeliveryView{
             onMoveHome: function(){
                 stack.replace(endDelivery, cardRead)
+                keyListenerRect.focus = true;
             }
         }
     }

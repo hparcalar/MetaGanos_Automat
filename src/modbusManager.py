@@ -23,11 +23,11 @@ class ModbusManager():
 
     def __start(self):
         self.runUpdater = True
-        self.runListener = True
+        #self.runListener = True
         self.threadUpdater = Thread(target=self.__updateLoop)
-        self.threadListener = Thread(target=self.__listenerLoop)
+        #self.threadListener = Thread(target=self.__listenerLoop)
         self.threadUpdater.start()
-        self.threadListener.start()
+        #self.threadListener.start()
 
 
     def stop(self):
@@ -45,6 +45,7 @@ class ModbusManager():
 
 
     def pushItem(self, spiralNo) -> bool:
+        return True
         pushResult = False
 
         try:

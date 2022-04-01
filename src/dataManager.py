@@ -377,9 +377,11 @@ class DataManager():
         try:
             r = self.connection.execute("SELECT ItemCategoryId, ItemId FROM Spiral WHERE SpiralNo = " + str(spiralNo)).fetchone()
             if r:
+                ir = self.connection.execute("SELECT ItemGroupId FROM Item WHERE Id = " + str(r[1])).fetchone()
                 returnData = {
                     "ItemCategoryId": r[0],
-                    "ItemId": r[1]
+                    "ItemId": r[1],
+                    "ItemGroupId": int(ir[0]) if ir and ir[0] else None
                 }
         except Exception as e:
             pass
@@ -430,26 +432,43 @@ class DataManager():
             self.connection.execute("DELETE FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId))
             for item in credits:
                 self.connection.execute("""
-                        INSERT INTO EmployeeCredit(Id, EmployeeId, ItemCategoryId, ItemGroupId, ItemId, ActiveCredit)
+                        INSERT INTO EmployeeCredit(Id, EmployeeId, ItemCategoryId, ItemGroupId, ItemId, 
+                            ActiveCredit,RangeType,RangeLength,CreditByRange,RangeCredit)
                         VALUES("""+ str(item['id']) +""", """ + str(item['employeeId']) + """,
-                        """+ str(item['itemCategoryId']) +""", NULL, NULL, """+ str(item['activeCredit']) +""")""")
+                        """+ str(item['itemCategoryId']) +""", """+ (str(item['itemGroupId']) if item['itemGroupId'] else 'NULL') +""", NULL, """+ 
+                            str(item['activeCredit']) +""", 
+                        """+ (str(item['rangeType']) if item['rangeType'] else 'NULL') +""", 
+                        """+ (str(item['rangeLength']) if item['rangeLength'] else 'NULL') +""",
+                        """+ (str(item['creditByRange']) if item['creditByRange'] else 'NULL') +""",
+                        """+ (str(item['rangeCredit']) if item['rangeCredit'] else 'NULL') +""" )""")
             self.connection.commit()
         except Exception as e:
             pass
         self.disconnect()
 
 
-    def getCreditInfo(self, employeeId, itemCategoryId):
+    def getCreditInfo(self, employeeId, itemCategoryId, itemGroupId = None):
         returnData = {
-            "ActiveCredit": 0
+            "ActiveCredit": 0,
+            "RangeType": 4,
+            "RangeLength": 1,
+            "CreditByRange": 0,
         }
 
         self.connect()
         try:
-            r = self.connection.execute("SELECT ActiveCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
-                + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
-            if r and int(r[0]) > 0:
+            r = None
+            if not itemGroupId:
+                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                    + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
+            else:
+                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                    + " AND ItemCategoryId = " + str(itemCategoryId) + " AND (ItemGroupId IS NULL OR ItemGroupId = "+ str(itemGroupId) +")").fetchone()
+            if r:
                 returnData['ActiveCredit'] = int(r[0])
+                returnData['RangeType'] = (int(r[1]) if r[1] else 4)
+                returnData['RangeLength'] = (int(r[2]) if r[2] else 1)
+                returnData['CreditByRange'] = (int(r[3]) if r[3] else 0)
         except Exception as e:
             pass
         self.disconnect()
@@ -457,12 +476,16 @@ class DataManager():
         return returnData
 
     
-    def checkEmployeeHasCredit(self, employeeId, itemCategoryId) -> bool:
+    def checkEmployeeHasCredit(self, employeeId, itemCategoryId, itemGroupId = None) -> bool:
         hasCredit = False
         self.connect()
         try:
-            r = self.connection.execute("SELECT ActiveCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
-                + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
+            if not itemGroupId:
+                r = self.connection.execute("SELECT RangeCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                    + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
+            else:
+                r = self.connection.execute("SELECT RangeCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                    + " AND ItemCategoryId = " + str(itemCategoryId) + " AND (ItemGroupId IS NULL OR ItemGroupId = "+ str(itemGroupId) +")").fetchone()
             if r and int(r[0]) > 0:
                 hasCredit = True
         except Exception as e:
@@ -475,7 +498,7 @@ class DataManager():
         consumeResult = False
         self.connect()
         try:
-            self.connection.execute("UPDATE EmployeeCredit SET ActiveCredit = ActiveCredit - 1 WHERE EmployeeId = " + str(employeeId) 
+            self.connection.execute("UPDATE EmployeeCredit SET RangeCredit = RangeCredit - 1 WHERE EmployeeId = " + str(employeeId) 
                 + " AND ItemCategoryId = " + str(itemCategoryId))
             self.connection.execute("INSERT INTO CreditConsuming(EmployeeId, ItemCategoryId, Credit, SyncStatus)"
                 + " VALUES("+ str(employeeId) +", "+ str(itemCategoryId) +", 1, "+ str(syncStatus) +")")

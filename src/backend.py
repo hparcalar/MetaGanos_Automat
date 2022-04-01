@@ -236,7 +236,8 @@ class BackendManager(QObject):
                 raise Exception("Spiral bilgisi bulunamadı.")
 
             hasRights = self.dbManager.checkEmployeeHasCredit(int(self.stateManager.userData['id']), 
-                int(spiralInfo['ItemCategoryId']) if spiralInfo['ItemCategoryId'] else 0)
+                int(spiralInfo['ItemCategoryId']) if spiralInfo['ItemCategoryId'] else 0,
+                int(spiralInfo['ItemGroupId']) if spiralInfo['ItemGroupId'] else None)
             if not hasRights:
                 raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")
             else:
@@ -268,25 +269,26 @@ class BackendManager(QObject):
     def requestActiveCredit(self):
         if self.stateManager.selectedCategoryId > 0:
             creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], 
-                self.stateManager.selectedCategoryId)
+                self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId)
             if creditInfo:
-                ctgInfo = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
-                if ctgInfo:
-                    rangeDesc = ''
-                    rangeCredit = 0
+                rangeDesc = ''
+                rangeCredit = 0
 
-                    if ctgInfo['CreditRangeType'] == 1:
-                        rangeDesc = 'Günlük'
-                    elif ctgInfo['CreditRangeType'] == 2:
-                        rangeDesc = 'Haftalık'
-                    elif ctgInfo['CreditRangeType'] == 3:
-                        rangeDesc = 'Aylık'
+                if creditInfo['RangeType'] == 1:
+                    rangeDesc = 'Günlük'
+                elif creditInfo['RangeType'] == 2:
+                    rangeDesc = 'Haftalık'
+                elif creditInfo['RangeType'] == 3:
+                    rangeDesc = 'Aylık'
 
-                    rangeCredit = int(ctgInfo['CreditByRange']) if ctgInfo['CreditByRange'] else 0
-                    creditInfo['CreditRange'] = {
-                        'RangeType': rangeDesc,
-                        'RangeCredit': rangeCredit,
-                    }
+                if creditInfo['RangeLength'] and int(creditInfo['RangeLength']) > 1:
+                    rangeDesc = str(creditInfo['RangeLength']) + ' ' + rangeDesc
+
+                rangeCredit = int(creditInfo['CreditByRange']) if creditInfo['CreditByRange'] else 0
+                creditInfo['CreditRange'] = {
+                    'RangeType': rangeDesc,
+                    'RangeCredit': rangeCredit,
+                }
 
                 self.getActiveCredit.emit(json.dumps(creditInfo))
 

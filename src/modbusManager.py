@@ -45,8 +45,8 @@ class ModbusManager():
 
 
     def pushItem(self, spiralNo) -> bool:
-        return True
-        pushResult = False
+        # return True
+        pushResult = { 'Result': False, 'ErrorMessage': '' }
 
         try:
             client = None
@@ -58,45 +58,59 @@ class ModbusManager():
                 client.connect()
             
             # check is ready bit
-            waitingForReady = 0
-            while self.__readCoils(client, 35) == False:
-                sleep(0.5)
-                waitingForReady = waitingForReady + 0.5
-                if waitingForReady >= 4:
-                    return False
+            # waitingForReady = 0
+            # while self.__readCoils(client, 35) == False:
+            #     sleep(0.5)
+            #     waitingForReady = waitingForReady + 0.5
+            #     if waitingForReady >= 4:
+            #         return False
+
+            # empty drop sensor flag
+            self.__writeCoils(client, 37, [0])
 
             # pick spiral
             self.__writeRegisters(client, int(spiralNo))
 
             # move arm
-            self.__writeCoils(client, 31, [1]) # is working bit launches True (36)
-            sleep(1)
-            self.__writeCoils(client, 31, [0])
+            # self.__writeCoils(client, 31, [1]) # is working bit launches True (36)
+            # sleep(1)
+            # self.__writeCoils(client, 31, [0])
 
             # check bussy bit
-            while self.__readCoils(client, 33) == True:
-                sleep(0.5)
+            # while self.__readCoils(client, 33) == True:
+            #     sleep(0.5)
 
             # move circle
             self.__writeCoils(client, 16, [1]) 
             sleep(1)
             self.__writeCoils(client, 16, [0])
 
-            sleep(2)
-
             # bussy bit
-            while self.__readCoils(client, 34) == True:
-                sleep(0.5)
+            # while self.__readCoils(client, 34) == True:
+            #     sleep(0.5)
 
             # move home
-            self.__writeCoils(client, 32, [1])
-            sleep(1)
-            self.__writeCoils(client, 32, [0]) # is working bit False (36)
+            # self.__writeCoils(client, 32, [1])
+            # sleep(1)
+            # self.__writeCoils(client, 32, [0]) # is working bit False (36)
+
+            # check drop sensor
+            sleep(4)
+            dropResult = self.__readCoils(client, 37)
+
+            if dropResult == False:
+                self.__writeCoils(client, 38, [1])
+                sleep(2)
+                dropResult = self.__readCoils(client, 37)
 
             client.close()
-            pushResult = True
-        except:
-            pushResult = False
+            pushResult['Result'] = dropResult
+
+            if dropResult == False:
+                pushResult['ErrorMessage'] = 'Ürün verilemedi, krediniz kartınıza iade edildi.'
+        except Exception as e:
+            pushResult['Result'] = False
+            pushResult['ErrorMessage'] = 'Cihaz iletişiminde bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.'
 
         return pushResult
     

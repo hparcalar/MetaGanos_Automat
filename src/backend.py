@@ -241,15 +241,14 @@ class BackendManager(QObject):
             if not hasRights:
                 raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")
             else:
-                tryCount = 0
+                # tryCount = 0
                 pushResult = self.modbusManager.pushItem(spiralNo)
-                while pushResult == False and tryCount < 3:
-                    sleep(1)
-                    pushResult = self.modbusManager.pushItem(spiralNo)
-                    tryCount = tryCount + 1
-
-                if pushResult == False:
-                    raise Exception("Cihaz iletişiminde bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.")
+                # while pushResult == False and tryCount < 1:
+                #     sleep(1)
+                #     pushResult = self.modbusManager.pushItem(spiralNo)
+                #     tryCount = tryCount + 1
+                if pushResult['Result'] == False:
+                    raise Exception(pushResult['ErrorMessage'])
                 else:
                     postResult = self.apiManager.sendSpiralConsuming({
                         'employeeId': self.stateManager.userData['id'],

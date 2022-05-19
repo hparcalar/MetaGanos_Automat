@@ -11,6 +11,7 @@ ApplicationWindow {
     height: screen.desktopAvailableHeight
     flags: Qt.WindowMaximized | Qt.FramelessWindowHint | Qt.Window
     visible: true
+    // visibility: Window.FullScreen
     title: qsTr("MetaGanos Otomat")
     onClosing: function(){
         backend.appIsClosing();
@@ -153,7 +154,7 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                backend.cardReading('0477467401049');
+                backend.cardReading('595B462B');
                 // stack.replace(cardRead, userHome)
             }
         }

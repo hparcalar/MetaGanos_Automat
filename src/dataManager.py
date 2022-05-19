@@ -14,10 +14,19 @@ class DataManager():
         self.disconnect()
 
     def connect(self):
+        connected = False
+
         try:
-            self.connection = sqlite3.connect("data/mg.db")
-        except Error as e:
-            pass
+            self.connection.cursor()
+            connected = True
+        except:
+            connected = False
+
+        if connected == False:
+            try:
+                self.connection = sqlite3.connect("data/mg.db")
+            except Error as e:
+                pass
 
     def disconnect(self):
         try:
@@ -50,8 +59,8 @@ class DataManager():
         self.connect()
         try:
             configData = self.connection.execute("SELECT * FROM MachineConfig").fetchone()
-        except:
-            pass
+        except Exception as e:
+            print(e)
         self.disconnect()
 
         if configData:
@@ -66,7 +75,9 @@ class DataManager():
                 'ModbusCoilServiceFlag': configData[8],
                 'ModbusRegisterSpiralNo': configData[9],
                 'Rows': configData[10],
-                'Cols': configData[11]
+                'Cols': configData[11],
+                'DealerCode': configData[12],
+                'PlantCode': configData[13],
             }
         return configData
     
@@ -99,16 +110,24 @@ class DataManager():
         self.connect()
 
         try:
+            config['modbusServerPort'] = ''
+            config['modbusCoilPushItem'] = ''
+            config['modbusCoilServiceFlag'] = ''
+            config['modbusRegisterSpiralNo'] = ''
+
             existingRecord = self.connection.execute("SELECT * FROM MachineConfig").fetchone()
             if existingRecord is None:
                 self.connection.execute("""
                     INSERT INTO MachineConfig(Id,Code, ApiAddr,ModbusType,ModbusServerAddr,ModbusServerPort,ModbusCoilPushItem,ModbusCoilServiceFlag,
-                        ModbusRegisterSpiralNo)
+                        ModbusRegisterSpiralNo, DealerCode, PlantCode)
                     VALUES (1,'"""+ config['machineCode'] +"""', '"""+ config['apiAddr'] +"""','"""+ config['modbusType'] +"""',
                     '"""+ config['modbusServerAddr'] +"""',
                         '"""+ config['modbusServerPort'] +"""', '"""+ config['modbusCoilPushItem'] +"""', 
                         '"""+ config['modbusCoilServiceFlag'] +"""',
-                        '"""+ config['modbusRegisterSpiralNo'] +"""')
+                        '"""+ config['modbusRegisterSpiralNo'] +"""', 
+                        '"""+ config['dealerCode'] +"""',
+                        '"""+ config['plantCode'] +"""'
+                        )
                 """)
             else:
                 self.connection.execute("""
@@ -116,12 +135,12 @@ class DataManager():
                         ModbusType='"""+ config['modbusType'] +"""', ModbusServerAddr='"""+config['modbusServerAddr']+"""',
                         ModbusServerPort='"""+config['modbusServerPort']+"""', ModbusCoilPushItem='"""+config['modbusCoilPushItem']+"""',
                         ModbusCoilServiceFlag='"""+config['modbusCoilServiceFlag']+"""', 
-                        ModbusRegisterSpiralNo='"""+config['modbusRegisterSpiralNo']+"""'
+                        ModbusRegisterSpiralNo='"""+config['modbusRegisterSpiralNo']+"""', DealerCode='"""+ config['dealerCode'] +"""', PlantCode='"""+ config['plantCode'] +"""'
                 """)
 
             self.connection.commit()
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         saveResult = True
         self.disconnect()
@@ -228,6 +247,29 @@ class DataManager():
         self.disconnect()
         return returnData
 
+    def deleteItemCategory(self, categoryId):
+        self.connect()
+        try:
+            groupsOfCat = self.getItemGroups(categoryId, False)
+            if groupsOfCat and len(groupsOfCat) > 0:
+                for gr in groupsOfCat:
+                    itemsOfGr = self.getItems(gr['Id'], False)
+                    if itemsOfGr and len(itemsOfGr) > 0:
+                        for it in itemsOfGr:
+                            itSql = "DELETE FROM Item WHERE Id=" + str(it['Id'])
+                            self.connection.execute(itSql)
+
+                    grSql = "DELETE FROM ItemGroup WHERE Id=" + str(gr['Id'])
+                    self.connection.execute(grSql)
+
+            sql = "DELETE FROM ItemCategory WHERE Id = " + str(categoryId)
+            self.connection.execute(sql)
+            self.connection.commit()
+        except Exception as e:
+            print(e)
+
+        self.disconnect()
+
     # ITEM GROUP BUSINESS
     def saveItemGroup(self, group):
         self.connect()
@@ -273,7 +315,7 @@ class DataManager():
         return returnData
 
 
-    def getItemGroups(self, categoryId):
+    def getItemGroups(self, categoryId, disconnect=True):
         returnData = []
         self.connect()
         try:
@@ -288,8 +330,27 @@ class DataManager():
                 })
         except:
             pass
-        self.disconnect()
+        
+        if disconnect:
+            self.disconnect()
         return returnData
+
+    def deleteItemGroup(self, groupId):
+        self.connect()
+        try:
+            itemsOfGroup = self.getItems(groupId, False)
+            if itemsOfGroup and len(itemsOfGroup) > 0:
+                for item in itemsOfGroup:
+                    itemSql = "DELETE FROM Item WHERE Id=" + str(item['Id'])
+                    self.connection.execute(itemSql)
+
+            sql = "DELETE FROM ItemGroup WHERE Id = " + str(groupId)
+            self.connection.execute(sql)
+            self.connection.commit()
+        except Exception as e:
+            print(e)
+
+        self.disconnect()
 
     # ITEM BUSINESS
     def saveItem(self, item):
@@ -318,7 +379,7 @@ class DataManager():
         self.disconnect()
 
     
-    def getItems(self, groupId):
+    def getItems(self, groupId, disconnect=True):
         returnData = []
         self.connect()
         try:
@@ -333,10 +394,29 @@ class DataManager():
                 })
         except:
             pass
+        
+        if disconnect:
+            self.disconnect()
+        return returnData
+
+    def getItemsByCategory(self, categoryId):
+        returnData = []
+        self.connect()
+        try:
+            rows = self.connection.execute("SELECT * FROM Item WHERE ItemCategoryId=" + str(categoryId)).fetchall()
+            for r in rows:
+                returnData.append({
+                    'Id': r[0],
+                    'ItemCode': r[1],
+                    'ItemName': r[2],
+                    'ItemGroupId': r[3],
+                    'ItemCategoryId': r[4]
+                })
+        except:
+            pass
         self.disconnect()
         return returnData
 
-    
     def getItem(self, itemId):
         returnData = None
         self.connect()
@@ -354,7 +434,16 @@ class DataManager():
         self.disconnect()
         return returnData
 
-    
+    def deleteItem(self, itemId):
+        self.connect()
+        try:
+            sql = "DELETE FROM Item WHERE Id = " + str(itemId)
+            self.connection.execute(sql)
+            self.connection.commit()
+        except Exception as e:
+            print(e)
+
+        self.disconnect()
     # SPIRAL BUSINESS
     def saveSpirals(self, spirals):
         self.connect()
@@ -433,14 +522,16 @@ class DataManager():
             for item in credits:
                 self.connection.execute("""
                         INSERT INTO EmployeeCredit(Id, EmployeeId, ItemCategoryId, ItemGroupId, ItemId, 
-                            ActiveCredit,RangeType,RangeLength,CreditByRange,RangeCredit)
+                            ActiveCredit,RangeType,RangeLength,CreditByRange,RangeCredit, CreditEndDate)
                         VALUES("""+ str(item['id']) +""", """ + str(item['employeeId']) + """,
                         """+ str(item['itemCategoryId']) +""", """+ (str(item['itemGroupId']) if item['itemGroupId'] else 'NULL') +""", NULL, """+ 
                             str(item['activeCredit']) +""", 
                         """+ (str(item['rangeType']) if item['rangeType'] else 'NULL') +""", 
                         """+ (str(item['rangeLength']) if item['rangeLength'] else 'NULL') +""",
                         """+ (str(item['creditByRange']) if item['creditByRange'] else 'NULL') +""",
-                        """+ (str(item['rangeCredit']) if item['rangeCredit'] else 'NULL') +""" )""")
+                        """+ (str(item['rangeCredit']) if item['rangeCredit'] else 'NULL') + """,
+                        '"""+ (str(item['creditEndDate'])[0:10] if item['creditEndDate'] else 'NULL') +"""'
+                        )""")
             self.connection.commit()
         except Exception as e:
             pass
@@ -459,10 +550,10 @@ class DataManager():
         try:
             r = None
             if not itemGroupId:
-                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE CreditEndDate >= DATE() AND EmployeeId = " + str(employeeId) 
                     + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
             else:
-                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
+                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE CreditEndDate >= DATE() AND EmployeeId = " + str(employeeId) 
                     + " AND ItemCategoryId = " + str(itemCategoryId) + " AND (ItemGroupId IS NULL OR ItemGroupId = "+ str(itemGroupId) +")").fetchone()
             if r:
                 returnData['ActiveCredit'] = int(r[0])
@@ -482,10 +573,10 @@ class DataManager():
         try:
             if not itemGroupId:
                 r = self.connection.execute("SELECT RangeCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
-                    + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
+                    + " AND ItemCategoryId = " + str(itemCategoryId) + " AND CreditEndDate >= DATE()").fetchone()
             else:
                 r = self.connection.execute("SELECT RangeCredit FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId) 
-                    + " AND ItemCategoryId = " + str(itemCategoryId) + " AND (ItemGroupId IS NULL OR ItemGroupId = "+ str(itemGroupId) +")").fetchone()
+                    + " AND ItemCategoryId = " + str(itemCategoryId) + " AND CreditEndDate >= DATE() AND(ItemGroupId IS NULL OR ItemGroupId = "+ str(itemGroupId) +")").fetchone()
             if r and int(r[0]) > 0:
                 hasCredit = True
         except Exception as e:
@@ -499,7 +590,7 @@ class DataManager():
         self.connect()
         try:
             self.connection.execute("UPDATE EmployeeCredit SET RangeCredit = RangeCredit - 1 WHERE EmployeeId = " + str(employeeId) 
-                + " AND ItemCategoryId = " + str(itemCategoryId))
+                + " AND ItemCategoryId = " + str(itemCategoryId) + " AND CreditEndDate >= DATE()")
             self.connection.execute("INSERT INTO CreditConsuming(EmployeeId, ItemCategoryId, Credit, SyncStatus)"
                 + " VALUES("+ str(employeeId) +", "+ str(itemCategoryId) +", 1, "+ str(syncStatus) +")")
             self.connection.commit()

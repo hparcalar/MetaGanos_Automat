@@ -18,8 +18,8 @@ class StateManager():
         try:
             self.configData = self.dbManager.getMachineConfig()
             self.apiUri = self.configData['ApiAddr']
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     
     def getUserData(self):
@@ -31,7 +31,9 @@ class StateManager():
         try:
             resp = requests.post(self.apiUri + 'User/LoginCard', json={
                 'login': cardNo,
-                'password': ''
+                'password': '',
+                'dealerCode': self.configData['DealerCode'],
+                'plantCode': self.configData['PlantCode'],
             })
 
             if resp.status_code == 200:

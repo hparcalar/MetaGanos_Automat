@@ -29,7 +29,9 @@ class DataMigrator():
                 ModbusCoilServiceFlag NVARCHAR(50),
                 ModbusRegisterSpiralNo NVARCHAR(50),
                 Rows INT,
-                Cols INT)    
+                Cols INT,
+                DealerCode NVARCHAR(50),
+                PlantCode NVARCHAR(50))    
             """,
             """
                 CREATE TABLE IF NOT EXISTS Employee(
@@ -89,7 +91,8 @@ class DataMigrator():
                     RangeType INT,
                     RangeLength INT,
                     CreditByRange INT,
-                    RangeCredit INT
+                    RangeCredit INT,
+                    CreditEndDate TEXT
                 )
             """,
             """

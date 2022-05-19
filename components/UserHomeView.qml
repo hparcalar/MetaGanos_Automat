@@ -116,17 +116,17 @@ Item {
                     source: categoryImage
                 }
 
-                Label{
-                    color: "orange"
-                    anchors.bottom: parent.bottom
-                    anchors.top: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    horizontalAlignment: Text.AlignHCenter 
-                    text: activeCredit.toString() + ' Adet'
-                    font.bold: true
-                    font.pixelSize: 36
-                }
+                // Label{
+                //     color: "orange"
+                //     anchors.bottom: parent.bottom
+                //     anchors.top: parent.bottom
+                //     anchors.left: parent.left
+                //     anchors.right: parent.right
+                //     horizontalAlignment: Text.AlignHCenter 
+                //     text: activeCredit.toString() + ' Adet'
+                //     font.bold: true
+                //     font.pixelSize: 36
+                // }
             }
         }
     }
@@ -214,108 +214,12 @@ Item {
                         id: topCategoryPanel
                         Layout.fillWidth: true
                         Layout.preferredHeight: mainColumn.height / 3
-
-                        // Rectangle{
-                        //     Layout.preferredWidth: mainColumn.width / 2
-                        //     Button{
-                        //         onClicked: moveItemGroups(1)
-                        //         background:Rectangle {
-                        //             border.width: control.activeFocus ? 2 : 1
-                        //             border.color: "orange"
-                        //             color: "#fff"
-                        //             radius: 4
-                        //         }
-                        //         anchors.centerIn: parent
-                        //         height:mainColumn.height / 5
-                        //         width: mainColumn.width / 3
-
-                        //         Image {
-                        //             anchors.centerIn: parent
-                        //             sourceSize.height: mainColumn.height / 5 - 10
-                        //             sourceSize.width: mainColumn.width / 3 - 10
-                        //             fillMode: Image.Stretch
-                        //             source: "../asset/item-groups/helmet.jpg"
-                        //         }
-                        //     }
-                        // }
-
-                        // Rectangle{
-                        //     Layout.preferredWidth: mainColumn.width / 2
-                        //     Button{
-                        //         onClicked: moveItemGroups(2)
-                        //         background:Rectangle {
-                        //             border.width: control.activeFocus ? 2 : 1
-                        //             border.color: "orange"
-                        //             color: "#fff"
-                        //             radius: 4
-                        //         }
-                        //         anchors.centerIn: parent
-                        //         height:mainColumn.height / 5
-                        //         width: mainColumn.width / 3
-
-                        //         Image {
-                        //             anchors.centerIn: parent
-                        //             sourceSize.height: mainColumn.height / 5 - 10
-                        //             sourceSize.width: mainColumn.width / 3 - 10
-                        //             fillMode: Image.Stretch
-                        //             source: "../asset/item-groups/glass.jpg"
-                        //         }
-                        //     }
-                        // }
                     }
 
                     RowLayout{
                         id: bottomCategoryPanel
                         Layout.fillWidth: true
                         Layout.preferredHeight: mainColumn.height / 4
-
-                        // Rectangle{
-                        //     Layout.preferredWidth: mainColumn.width / 2
-                        //     Button{
-                        //         onClicked: moveItemGroups(3)
-                        //         background:Rectangle {
-                        //             border.width: control.activeFocus ? 2 : 1
-                        //             border.color: "orange"
-                        //             color: "#fff"
-                        //             radius: 4
-                        //         }
-                        //         anchors.centerIn: parent
-                        //         height:mainColumn.height / 5
-                        //         width: mainColumn.width / 3
-
-                        //         Image {
-                        //             anchors.centerIn: parent
-                        //             sourceSize.height: mainColumn.height / 5 - 10
-                        //             sourceSize.width: mainColumn.width / 3 - 10
-                        //             fillMode: Image.Stretch
-                        //             source: "../asset/item-groups/gloves.jpg"
-                        //         }
-                        //     }
-                        // }
-
-                        // Rectangle{
-                        //     Layout.preferredWidth: mainColumn.width / 2
-                        //     Button{
-                        //         onClicked: moveItemGroups(4)
-                        //         background:Rectangle {
-                        //             border.width: control.activeFocus ? 2 : 1
-                        //             border.color: "orange"
-                        //             color: "#fff"
-                        //             radius: 4
-                        //         }
-                        //         anchors.centerIn: parent
-                        //         height:mainColumn.height / 5
-                        //         width: mainColumn.width / 3
-
-                        //         Image {
-                        //             anchors.centerIn: parent
-                        //             sourceSize.height: mainColumn.height / 5 - 10
-                        //             sourceSize.width: mainColumn.width / 3 - 10
-                        //             fillMode: Image.Stretch
-                        //             source: "../asset/item-groups/earplugs.jpg"
-                        //         }
-                        //     }
-                        // }
                     }
                 }
             }

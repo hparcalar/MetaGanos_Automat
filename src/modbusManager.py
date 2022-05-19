@@ -1,4 +1,5 @@
 from threading import Thread
+from src.hkThread import HekaThread
 from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.constants import Endian
@@ -24,7 +25,7 @@ class ModbusManager():
     def __start(self):
         self.runUpdater = True
         #self.runListener = True
-        self.threadUpdater = Thread(target=self.__updateLoop)
+        self.threadUpdater = HekaThread(target=self.__updateLoop)
         #self.threadListener = Thread(target=self.__listenerLoop)
         self.threadUpdater.start()
         #self.threadListener.start()
@@ -35,7 +36,8 @@ class ModbusManager():
         self.runListener = False
         if self.threadUpdater:
             try:
-                self.threadUpdater.join()
+                self.threadUpdater.stop()
+                # self.threadUpdater.join()
             except:
                 pass
             try:
@@ -45,7 +47,6 @@ class ModbusManager():
 
 
     def pushItem(self, spiralNo) -> bool:
-        # return True
         pushResult = { 'Result': False, 'ErrorMessage': '' }
 
         try:

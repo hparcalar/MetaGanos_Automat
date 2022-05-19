@@ -289,14 +289,17 @@ Item {
 
                 Text {
                     id: txtRangeOfCredit
-                    width: parent.width
+                    anchors.fill: parent
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     color:"#333"
                     padding: 2
-                    font.pixelSize: 48
+                    // font.pixelSize: 48
+                    font.pointSize: 36
+                    font.bold: true
+                    fontSizeMode: Text.Fit
                     style: Text.Outline
                     styleColor:'#fff'
-                    font.bold: true
                     text: "Aylık İstihkak: 20"
                 }
             }
@@ -308,14 +311,17 @@ Item {
 
                 Text {
                     id: txtRemainingCredit
-                    width: parent.width
+                    anchors.fill: parent
                     horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
                     color:"#333"
                     padding: 2
-                    font.pixelSize: 48
+                    // font.pixelSize: 48
+                    font.pointSize: 36
+                    font.bold: true
+                    fontSizeMode: Text.Fit
                     style: Text.Outline
                     styleColor:'#fff'
-                    font.bold: true
                     text: "Kalan: "
                 }
             }

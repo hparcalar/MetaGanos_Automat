@@ -1,5 +1,6 @@
 from src.dataManager import DataManager
 from threading import Thread
+from src.hkThread import HekaThread
 from time import sleep
 from datetime import datetime
 import json
@@ -11,8 +12,11 @@ class ApiManager():
         self.mustRun = False
         self.apiUri = ''
         self.token = ''
+        self.dealerCode = ''
+        self.plantCode = ''
+        self.machineId = 0
         self.configData = {}
-        self.runner = Thread(target=self.__runnerLoop)
+        self.runner = HekaThread(target=self.__runnerLoop)
 
 
     def listen(self):
@@ -22,18 +26,32 @@ class ApiManager():
 
     def __obtainToken(self):
         try:
+            self.dealerCode = self.configData['DealerCode']
+            self.plantCode = self.configData['PlantCode']
+
             resp = requests.post(self.apiUri + 'User/LoginMachine', json={
                 'login': self.configData['Code'],
-                'password': ''
+                'password': '',
+                'dealerCode': self.dealerCode,
+                'plantCode': self.plantCode,
             })
 
             if resp.status_code == 200:
                 self.token = resp.text
+                
+                respId = requests.post(self.apiUri + 'User/MachineId', json={
+                    'login': self.configData['Code'],
+                    'password': '',
+                    'dealerCode': self.dealerCode,
+                    'plantCode': self.plantCode,
+                })
+                if respId.status_code == 200:
+                    self.machineId = int(respId.text)
         except:
             pass
 
 
-    def __updateEmployees(self):
+    def __updateEmployees(self): 
         try:
             resp = requests.get(self.apiUri + 'Employee', 
                 headers={ "Authorization": "Bearer " + self.token })
@@ -55,41 +73,67 @@ class ApiManager():
 
     def __updateItemCategories(self):
         try:
-            resp = requests.get(self.apiUri + 'ItemCategory', 
+            plantId = None
+            respFindPlant = requests.get(self.apiUri + 'Plant/Find/' + self.dealerCode + '/' + self.plantCode,
                 headers={ "Authorization": "Bearer " + self.token })
+            if respFindPlant.status_code == 200:
+                data = respFindPlant.json()
+                plantId = data['id']
 
-            if resp.status_code == 200:
-                data = resp.json()
-                for d in data:
-                    try:
-                        respDetail = requests.get(self.apiUri + 'ItemCategory/' + str(d['id']), 
-                            headers={ "Authorization": "Bearer " + self.token })
-                        if respDetail.status_code == 200:
-                            detailObj = respDetail.json()
-                            self.dbManager.saveItemCategory(detailObj)
-                    except:
-                        pass
+            if plantId:
+                resp = requests.get(self.apiUri + 'Plant/' + str(plantId) + '/ItemCategories', 
+                    headers={ "Authorization": "Bearer " + self.token })
+
+                if resp.status_code == 200:
+                    data = resp.json()
+
+                    existingData = self.dbManager.getItemCategories()
+                    deletedData = list(filter(lambda d: len(list(filter(lambda c: c['id'] == d['Id'], data))) == 0 ,existingData))
+                    if deletedData and len(deletedData) > 0:
+                        for dl in deletedData:
+                            self.dbManager.deleteItemCategory(dl['Id'])
+
+                    for d in data:
+                        try:
+                            respDetail = requests.get(self.apiUri + 'ItemCategory/' + str(d['id']), 
+                                headers={ "Authorization": "Bearer " + self.token })
+                            if respDetail.status_code == 200:
+                                detailObj = respDetail.json()
+                                self.dbManager.saveItemCategory(detailObj)
+                        except:
+                            pass
 
         except Exception as e:
+            print(e)
             pass
 
     
     def __updateItemGroups(self):
         try:
-            resp = requests.get(self.apiUri + 'ItemGroup', 
-                headers={ "Authorization": "Bearer " + self.token })
+            categoryList = self.dbManager.getItemCategories()
 
-            if resp.status_code == 200:
-                data = resp.json()
-                for d in data:
-                    try:
-                        respDetail = requests.get(self.apiUri + 'ItemGroup/' + str(d['id']),
-                            headers={ "Authorization": "Bearer " + self.token })
-                        if respDetail.status_code == 200:
-                            detailObj = respDetail.json()
-                            self.dbManager.saveItemGroup(detailObj)
-                    except:
-                        pass
+            for cat in categoryList:
+                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/Groups', 
+                    headers={ "Authorization": "Bearer " + self.token })
+
+                if resp.status_code == 200:
+                    data = resp.json()
+
+                    existingData = self.dbManager.getItemGroups(cat['Id'])
+                    deletedData = list(filter(lambda d: len(list(filter(lambda c: c['id'] == d['Id'], data))) == 0 ,existingData))
+                    if deletedData and len(deletedData) > 0:
+                        for dl in deletedData:
+                            self.dbManager.deleteItemGroup(dl['Id'])
+
+                    for d in data:
+                        try:
+                            respDetail = requests.get(self.apiUri + 'ItemGroup/' + str(d['id']),
+                                headers={ "Authorization": "Bearer " + self.token })
+                            if respDetail.status_code == 200:
+                                detailObj = respDetail.json()
+                                self.dbManager.saveItemGroup(detailObj)
+                        except:
+                            pass
         except Exception as e:
             pass
 
@@ -111,20 +155,30 @@ class ApiManager():
     
     def __updateItems(self):
         try:
-            resp = requests.get(self.apiUri + 'Item/ForMachine/' + self.configData['Code'],
-                headers={ "Authorization": "Bearer " + self.token })
+            categoryList = self.dbManager.getItemCategories()
             
-            if resp.status_code == 200:
-                data = resp.json()
-                for d in data:
-                    self.dbManager.saveItem(d)
+            for cat in categoryList:
+                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/Items',
+                    headers={ "Authorization": "Bearer " + self.token })
+                
+                if resp.status_code == 200:
+                    data = resp.json()
+
+                    existingData = self.dbManager.getItemsByCategory(cat['Id'])
+                    deletedData = list(filter(lambda d: len(list(filter(lambda c: c['id'] == d['Id'], data))) == 0 ,existingData))
+                    if deletedData and len(deletedData) > 0:
+                        for dl in deletedData:
+                            self.dbManager.deleteItem(dl['Id'])
+
+                    for d in data:
+                        self.dbManager.saveItem(d)
         except Exception as e:
             pass
 
 
     def __updateSpirals(self):
         try:
-            resp = requests.get(self.apiUri + 'Machine/' + self.configData['Code'] + '/SpiralContents',
+            resp = requests.get(self.apiUri + 'Machine/' + str(self.machineId) + '/MachineSpiralContents',
                 headers={ "Authorization": "Bearer " + self.token })
             
             if resp.status_code == 200:
@@ -137,25 +191,14 @@ class ApiManager():
     def sendSpiralConsuming(self, consumeInfo) -> bool:
         returnVal = False
         try:
-            resp = requests.get(self.apiUri + 'Machine/Find/' + self.configData['Code'],
-                headers={ "Authorization": "Bearer " + self.token })
-            if resp.status_code == 200:
-                macData = resp.json()
-                if int(macData['id']) > 0:
-                    prm = {
-                        'employeeId': int(consumeInfo['employeeId']),
-                        'itemId': int(consumeInfo['itemId']),
-                        'spiralNo': int(consumeInfo['spiralNo']),
-                        'deliverDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-                    }
-                    respDeliver = requests.post(self.apiUri + 'Machine/'+ str(macData['id']) +'/DeliverProduct', json={
-                        'employeeId': int(consumeInfo['employeeId']),
-                        'itemId': int(consumeInfo['itemId']),
-                        'spiralNo': int(consumeInfo['spiralNo']),
-                        'deliverDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
-                    }, headers={ "Authorization": "Bearer " + self.token })
-                    if respDeliver.status_code == 200:
-                        returnVal = True
+            respDeliver = requests.post(self.apiUri + 'Machine/'+ str(self.machineId) +'/DeliverProduct', json={
+                'employeeId': int(consumeInfo['employeeId']),
+                'itemId': int(consumeInfo['itemId']),
+                'spiralNo': int(consumeInfo['spiralNo']),
+                'deliverDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            }, headers={ "Authorization": "Bearer " + self.token })
+            if respDeliver.status_code == 200:
+                returnVal = True
         except Exception as e:
             pass
         return returnVal
@@ -184,10 +227,12 @@ class ApiManager():
             except:
                 pass
 
+
     def stop(self):
         self.mustRun = False
         if self.runner:
             try:
-                self.runner.join()
+                self.runner.stop()
+                #self.runner.join()
             except:
                 pass

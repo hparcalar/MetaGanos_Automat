@@ -72,14 +72,17 @@ Item {
             }
             contentItem: Label {
                 text:itemName
+                anchors.fill: parent
+                font.pointSize: 24
+                font.bold: true
+                fontSizeMode: Text.HorizontalFit
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
             }
-            font.pixelSize: 36
-            font.bold: true
-            height:mainColumn.height / 5
-            width: mainColumn.width / 4
+
+            height:mainColumn.height / 5 - 10
+            width: mainColumn.width / 4 - 13
 
             Image {
                 visible: groupImage != null && groupImage.length > 0
@@ -88,8 +91,8 @@ Item {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: 10
-                sourceSize.width: parent.width / 4
-                sourceSize.height: parent.height / 4
+                sourceSize.width: parent.width / 4 - 13
+                sourceSize.height: parent.height / 4 - 13
                 
                 fillMode: Image.PreserveAspectFit
                 source: groupImage

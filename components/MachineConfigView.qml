@@ -28,12 +28,9 @@ Item {
                 txtApiAddr.text = configObj['ApiAddr'];
                 if (configObj['ModbusType'] == 'RTU')
                     cmbModbusType.incrementCurrentIndex();
-                // cmbModbusType.currentValue = configObj['ModbusType'];
                 txtModbusServerAddr.text = configObj['ModbusServerAddr'];
-                txtModbusServerPort.text = configObj['ModbusServerPort'];
-                txtModbusCoilPushItem.text = configObj['ModbusCoilPushItem'];
-                txtModbusCoilServiceFlag.text = configObj['ModbusCoilServiceFlag'];
-                txtModbusRegisterSpiralNo.text = configObj['ModbusRegisterSpiralNo'];
+                txtDealerCode.text = configObj['DealerCode'];
+                txtPlantCode.text = configObj['PlantCode'];
             }
         }
     }
@@ -45,10 +42,8 @@ Item {
             apiAddr: txtApiAddr.text,
             modbusType: cmbModbusType.currentValue,
             modbusServerAddr: txtModbusServerAddr.text,
-            modbusServerPort: txtModbusServerPort.text,
-            modbusCoilPushItem: txtModbusCoilPushItem.text,
-            modbusCoilServiceFlag: txtModbusCoilServiceFlag.text,
-            modbusRegisterSpiralNo: txtModbusRegisterSpiralNo.text
+            dealerCode: txtDealerCode.text,
+            plantCode: txtPlantCode.text,
         }));
     }
 
@@ -222,7 +217,7 @@ Item {
                                 }
                             }
 
-                            // modbus server port
+                            // dealer code
                             Rectangle{
                                 Layout.alignment: Qt.AlignTop
                                 Layout.fillWidth: true
@@ -234,21 +229,21 @@ Item {
                                     Label {
                                         Layout.preferredWidth: parent.width / 2 - 30
                                         horizontalAlignment: Qt.AlignRight
-                                        text: "Server Port: "
+                                        text: "Bayi Kodu: "
                                         color: "#FFF"
                                         font.pixelSize: 24
                                     }
 
                                     TextField {
                                         Layout.preferredWidth: parent.width / 2 - 30
-                                        id: txtModbusServerPort
+                                        id: txtDealerCode
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
                                     }
                                 }
                             }
 
-                            // coil: push item
+                            // plant code
                             Rectangle{
                                 Layout.alignment: Qt.AlignTop
                                 Layout.fillWidth: true
@@ -260,70 +255,25 @@ Item {
                                     Label {
                                         Layout.preferredWidth: parent.width / 2 - 30
                                         horizontalAlignment: Qt.AlignRight
-                                        text: "Coil (Stok Düşürme): "
+                                        text: "Fabrika Kodu: "
                                         color: "#FFF"
                                         font.pixelSize: 24
                                     }
 
                                     TextField {
                                         Layout.preferredWidth: parent.width / 2 - 30
-                                        id: txtModbusCoilPushItem
+                                        id: txtPlantCode
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
                                     }
                                 }
                             }
 
-                            // coil: service flag
+                            // empty view buffer
                             Rectangle{
-                                Layout.alignment: Qt.AlignTop
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 100
+                                Layout.fillHeight: true
                                 color: "transparent"
-
-                                RowLayout{
-                                    anchors.fill: parent
-                                    Label {
-                                        Layout.preferredWidth: parent.width / 2 - 30
-                                        horizontalAlignment: Qt.AlignRight
-                                        text: "Coil (Servis Ekranı): "
-                                        color: "#FFF"
-                                        font.pixelSize: 24
-                                    }
-
-                                    TextField {
-                                        Layout.preferredWidth: parent.width / 2 - 30
-                                        id: txtModbusCoilServiceFlag
-                                        font.pixelSize: 24
-                                        horizontalAlignment: Qt.AlignLeft
-                                    }
-                                }
-                            }
-
-                            // register: spiral no
-                            Rectangle{
-                                Layout.alignment: Qt.AlignTop
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 100
-                                color: "transparent"
-
-                                RowLayout{
-                                    anchors.fill: parent
-                                    Label {
-                                        Layout.preferredWidth: parent.width / 2 - 30
-                                        horizontalAlignment: Qt.AlignRight
-                                        text: "Reg (Spiral No): "
-                                        color: "#FFF"
-                                        font.pixelSize: 24
-                                    }
-
-                                    TextField {
-                                        Layout.preferredWidth: parent.width / 2 - 30
-                                        id: txtModbusRegisterSpiralNo
-                                        font.pixelSize: 24
-                                        horizontalAlignment: Qt.AlignLeft
-                                    }
-                                }
                             }
                         }
                     }
@@ -337,25 +287,11 @@ Item {
                         ColumnLayout{
                             anchors.fill: parent
 
-                            
-
-                            // EMPTY SLOTS
+                            // empty view buffer
                             Rectangle{
-                                Layout.alignment: Qt.AlignTop
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 100
+                                Layout.fillHeight: true
                                 color: "transparent"
-
-                                
-                            }
-
-                            Rectangle{
-                                Layout.alignment: Qt.AlignTop
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 100
-                                color: "transparent"
-
-                                
                             }
                         }
                     }

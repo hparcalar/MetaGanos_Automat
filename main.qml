@@ -251,9 +251,13 @@ ApplicationWindow {
             onConfirmQuickDelivery: function(spiralNo){
                 txtProcessResult.text = '';
                 popupLoading.open();
+                var requested = false;
                 delay(500, function(){
                     try {
-                        backend.requestPushSpiral(parseInt(spiralNo));
+                        if (!requested){
+                            requested = true;
+                            backend.requestPushSpiral(parseInt(spiralNo));
+                        }
                     } catch(err){
 
                     }

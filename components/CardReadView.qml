@@ -9,6 +9,21 @@ Item {
     property StackView view
     signal moveNextStep()
 
+    Connections{
+        target: backend
+
+        function onGetNewVideo(){
+            try {
+                mediaPlayer.source = '';
+                mediaPlayer.stop();
+            } catch (error) {
+                
+            }
+            mediaPlayer.source = '../video/welcome.mp4';
+            mediaPlayer.play();
+        }
+    }
+
     Rectangle{
         id: mainRect
         anchors.fill: parent

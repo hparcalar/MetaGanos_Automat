@@ -15,7 +15,7 @@ class BackendManager(QObject):
     def __init__(self):
         QObject.__init__(self)
         self.dbManager = DataManager()
-        self.apiManager = ApiManager()
+        self.apiManager = ApiManager(self)
         self.stateManager = StateManager()
         self.modbusManager = ModbusManager(self)
         self.apiManager.listen()
@@ -56,12 +56,16 @@ class BackendManager(QObject):
     getPushSpiralResult = Signal(str)
     getActiveCredit = Signal(str)
     getCredit = Signal(str)
+    getNewVideo = Signal()
 
 
     # MODBUS HANDLERS
     def onServiceFlagActivated(self):
         self.serviceScreenRequested.emit()
 
+    # PUBLIC METHODS
+    def raiseNewVideoArrived(self):
+        self.getNewVideo.emit()
 
     # SLOTS
     @Slot()
@@ -72,7 +76,9 @@ class BackendManager(QObject):
 
     @Slot()
     def checkMachineConfig(self):
-        self.checkConfigResult.emit(self.dbManager.checkMachineConfig())
+        res = self.dbManager.checkMachineConfig()
+        # self.apiManager.updateVideo()
+        self.checkConfigResult.emit(res)
 
     # BEGIN -- CARD READING AND STATE MANAGEMENT SLOTS
     @Slot(str)

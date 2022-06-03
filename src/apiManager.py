@@ -3,11 +3,14 @@ from threading import Thread
 from src.hkThread import HekaThread
 from time import sleep
 from datetime import datetime
+from os.path import isfile, getmtime
+import os
 import json
 import requests
 
 class ApiManager():
-    def __init__(self):
+    def __init__(self, backend):
+        self._backend = backend
         self.dbManager = DataManager()
         self.mustRun = False
         self.apiUri = ''
@@ -140,7 +143,7 @@ class ApiManager():
 
     def __updateMachineContent(self):
         try:
-            resp = requests.get(self.apiUri + 'Machine/Find/' + self.configData['Code'],
+            resp = requests.get(self.apiUri + 'Machine/' + str(self.machineId),
                 headers={ "Authorization": "Bearer " + self.token })
             
             if resp.status_code == 200:
@@ -204,6 +207,40 @@ class ApiManager():
         return returnVal
 
 
+    def updateVideo(self):
+        try:
+            self.__obtainToken()
+            overwrite = False
+
+            with requests.get(self.apiUri + 'Machine/' + str(self.machineId) + '/Video',
+                headers={ "Authorization": "Bearer " + self.token }, stream=True) as resp:
+                if isfile('video/welcome.mp4') == False or (os.stat('video/welcome.mp4').st_size != len(resp.content)):
+                    overwrite = True
+                    with open('video/welcome_new.mp4', 'wb') as f:
+                        for chunk in resp.iter_content(chunk_size=8192): 
+                            f.write(chunk)
+
+                if overwrite == False and isfile('video/welcome.mp4') and isfile('video/welcome_new.mp4'):
+                    if os.stat('video/welcome.mp4').st_size != os.stat('video/welcome_new.mp4').st_size:
+                        os.remove('video/welcome.mp4') 
+                        overwrite = True
+                else:
+                    overwrite = True
+
+                if overwrite == True and isfile('video/welcome_new.mp4'):
+                    os.rename('video/welcome_new.mp4', 'video/welcome.mp4')
+                    self._backend.raiseNewVideoArrived()
+                else:
+                    try:
+                        if isfile('video/welcome_new.mp4'):
+                            os.remove('video/welcome_new.mp4')
+                    except:
+                        pass
+        except Exception as e:
+            print(e)
+            pass
+
+
     def __runnerLoop(self):
         while self.mustRun:
             try:
@@ -222,6 +259,7 @@ class ApiManager():
                     self.__updateItemGroups()
                     self.__updateItems()
                     self.__updateSpirals()
+                    self.updateVideo()
 
                 sleep(10)
             except:

@@ -13,7 +13,7 @@ if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 
-    backManager = BackendManager()
+    backManager = BackendManager(app)
     engine.rootContext().setContextProperty("backend", backManager)
 
     engine.load(os.fspath(Path(__file__).resolve().parent / "main.qml"))

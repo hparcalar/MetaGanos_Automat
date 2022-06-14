@@ -3,7 +3,9 @@ from pathlib import Path
 import sys
 import json
 from time import sleep
+from PySide2.QtGui import QGuiApplication
 from PySide2.QtCore import QObject, Slot, Signal
+from PySide2.QtQml import QQmlApplicationEngine
 from src.dataManager import DataManager
 from src.apiManager import ApiManager
 from src.stateManager import StateManager
@@ -11,9 +13,11 @@ from src.modbusManager import ModbusManager
 from threading import Thread
 import datetime
 
+
 class BackendManager(QObject):
-    def __init__(self):
+    def __init__(self, appObject):
         QObject.__init__(self)
+        self.__app = appObject
         self.dbManager = DataManager()
         self.apiManager = ApiManager(self)
         self.stateManager = StateManager()
@@ -73,6 +77,10 @@ class BackendManager(QObject):
         self.__stopApiManager()
         self.__stopModbusManager()
 
+
+    @Slot()
+    def restartApp(self):
+        pass
 
     @Slot()
     def checkMachineConfig(self):

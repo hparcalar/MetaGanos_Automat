@@ -10,11 +10,13 @@ import PySide2.QtMultimedia
 from src.backend import BackendManager
 
 if __name__ == "__main__":
+    os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 
     backManager = BackendManager(app)
     engine.rootContext().setContextProperty("backend", backManager)
+    engine.quit.connect(app.quit)
 
     engine.load(os.fspath(Path(__file__).resolve().parent / "main.qml"))
 

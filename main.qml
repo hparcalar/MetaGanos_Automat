@@ -4,15 +4,16 @@ import QtQuick.Window 2.14
 import QtQuick.Layouts 1.2
 import QtMultimedia 5.12
 import QtQuick.Dialogs 1.1
+import QtQuick.VirtualKeyboard 2.14
 import "components"
 
 ApplicationWindow {
     id: mainWindow
     width: screen.desktopAvailableWidth
     height: screen.desktopAvailableHeight
-    flags: Qt.WindowMaximized | Qt.FramelessWindowHint | Qt.Window
+    flags: Qt.WindowMaximized | Qt.FramelessWindowHint | Qt.Window //| Qt.WindowStaysOnTopHint
     visible: true
-    visibility: Window.FullScreen
+    //visibility: Window.FullScreen
     title: qsTr("MetaGanos Otomat")
     onClosing: function(){
         backend.appIsClosing();
@@ -29,6 +30,20 @@ ApplicationWindow {
         running: false
         onTriggered: {
             warningDialog.visible = false;
+        }
+    }
+
+    Timer {
+        id: tmrPushResult
+        interval: 5000
+        repeat: false
+        running: false
+        onTriggered: {
+            try {
+                popupLoading.close();
+            } catch (error) {
+                
+            }
         }
     }
 
@@ -111,6 +126,9 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 50
                         echoMode: TextInput.Password
+                        onFocusChanged: function(){
+                            backend.requestOsk(focus);
+                        }
                         Keys.onPressed: function(event){
                             if (event.key == Qt.Key_Enter){
                                 if (txtLoginPassword.text.indexOf('mg123') > -1){
@@ -233,6 +251,18 @@ ApplicationWindow {
     Connections {
         target: backend
 
+        function onAppCloseRequested(){
+            mainWindow.close();
+        }
+
+        function onOskRequested(){
+            hekaKeyboard.visible = true;
+        }
+
+        function onOskClosed(){
+            hekaKeyboard.visible = false;
+        }
+
         function onCheckConfigResult(result){
             if (!result)
             {
@@ -241,6 +271,8 @@ ApplicationWindow {
         }
 
         function onCardLoggedIn(result){
+            backend.updateLiveSignal();
+
             if (result){
                 stack.replace(cardRead, userHome)
             }
@@ -248,6 +280,12 @@ ApplicationWindow {
                 warningDialog.visible = true;
                 tmrWarning.running = true;
             }
+        }
+
+        function onClientTimedOut(){
+            if (stack.currentItem.toString().indexOf('CardReadView') < 0 && stack.currentItem.toString().indexOf('MachineConfigView') < 0 
+                && stack.currentItem.toString().indexOf('ServiceView') < 0)
+                stack.replace(stack.currentItem, cardRead);
         }
 
         function onServiceScreenRequested(){
@@ -263,6 +301,7 @@ ApplicationWindow {
             else
             {
                 txtProcessResult.text = pushResult.ErrorMessage;
+                tmrPushResult.running = true;
                 // pushErrorDialog.text = pushResult.ErrorMessage;
                 // pushErrorDialog.visible = true;
                 // tmrPushError.running = true;
@@ -272,7 +311,7 @@ ApplicationWindow {
 
     // ON LOAD EVENTS & UI FUNCTIONS
     Component.onCompleted: function(){
-        backend.checkMachineConfig()
+        backend.checkMachineConfig();
         //keyListenerRect.focus();
     }
 
@@ -330,7 +369,7 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                backend.cardReading('595B462B');
+                backend.cardReading('12001562');
                 // stack.replace(cardRead, userHome)
             }
         }
@@ -341,13 +380,16 @@ ApplicationWindow {
         id:userHome
         UserHomeView{
             onMoveItemGroups: function(categoryId){
+                backend.updateLiveSignal();
                 backend.storeSelectedItemCategory(categoryId)
                 stack.replace(userHome, itemGroups)
             }
             onMoveQuickDelivery: function(){
+                backend.updateLiveSignal();
                 stack.replace(userHome, quickDelivery)
             }
             onMoveCardRead: function(){
+                backend.updateLiveSignal();
                 stack.replace(userHome, cardRead);
                 mainWindow.visibility = Window.FullScreen;
             }
@@ -359,9 +401,11 @@ ApplicationWindow {
         id:itemGroups
         ItemGroupView{
             onMoveBack: function(){
+                backend.updateLiveSignal();
                 stack.replace(itemGroups, userHome)
             }
             onShowGroupDetail: function(groupId){
+                backend.updateLiveSignal();
                 backend.storeSelectedItemGroup(groupId)
                 stack.replace(itemGroups, itemsView)
             }
@@ -373,9 +417,11 @@ ApplicationWindow {
         id: itemsView
         ItemView{
             onMoveBack: function(){
+                backend.updateLiveSignal();
                 stack.replace(itemsView, itemGroups)
             }
             onMoveSpiralView: function(itemId){
+                backend.updateLiveSignal();
                 backend.storeSelectedItem(itemId)
                 stack.replace(itemsView, spiralView)
             }
@@ -387,9 +433,11 @@ ApplicationWindow {
         id: spiralView
         SpiralView{
             onMoveBack: function(){
+                backend.updateLiveSignal();
                 stack.replace(spiralView, itemsView)
             }
             onSelectSpiral: function(spiralNo){
+                backend.updateLiveSignal();
                 txtProcessResult.text = '';
                 popupLoading.open();
                 var requested = false;
@@ -412,6 +460,7 @@ ApplicationWindow {
         id: endDelivery
         EndDeliveryView{
             onMoveHome: function(){
+                backend.updateLiveSignal();
                 stack.replace(endDelivery, cardRead);
                 keyListenerRect.focus = true;
                 mainWindow.visibility = Window.FullScreen;
@@ -424,9 +473,11 @@ ApplicationWindow {
         id: quickDelivery
         QuickDeliveryView{
             onMoveBack: function(){
+                backend.updateLiveSignal();
                 stack.replace(quickDelivery, userHome)
             }
             onConfirmQuickDelivery: function(spiralNo){
+                backend.updateLiveSignal();
                 txtProcessResult.text = '';
                 popupLoading.open();
                 var requested = false;
@@ -575,6 +626,20 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
             }
+        }
+
+        InputPanel {
+            id: hekaKeyboard
+            visible: false
+            anchors.fill: parent
+            anchors.leftMargin:mainWindow.width * 0.5
+            focus: true
+        }
+
+        Binding {
+            target: hekaKeyboard.keyboard.style
+            property: 'keyboardDesignHeight'
+            value: 750
         }
     }
 }

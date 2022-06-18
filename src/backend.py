@@ -6,6 +6,7 @@ from time import sleep
 from PySide2.QtGui import QGuiApplication
 from PySide2.QtCore import QObject, Slot, Signal
 from PySide2.QtQml import QQmlApplicationEngine
+from src.hkThread import HekaThread
 from src.dataManager import DataManager
 from src.apiManager import ApiManager
 from src.stateManager import StateManager
@@ -27,6 +28,10 @@ class BackendManager(QObject):
         self.cardThreadAlive = False
         self.cardKeyThread = None
         self.cardKeyLastRead = datetime.datetime.now()
+        self.lastLiveTime = datetime.datetime.now()
+        self.runLiveListener = True
+        self.liveListenerThread = HekaThread(target=self.__loopLiveListener)
+        self.liveListenerThread.start()
 
     def __stopApiManager(self):
         if self.apiManager:
@@ -61,11 +66,26 @@ class BackendManager(QObject):
     getActiveCredit = Signal(str)
     getCredit = Signal(str)
     getNewVideo = Signal()
+    clientTimedOut = Signal()
+    appCloseRequested = Signal()
+    oskRequested = Signal()
+    oskClosed = Signal()
 
 
     # MODBUS HANDLERS
     def onServiceFlagActivated(self):
         self.serviceScreenRequested.emit()
+
+    def __loopLiveListener(self):
+        while self.runLiveListener == True:
+            dtNow = datetime.datetime.now()
+            totalDiffSec = (dtNow - self.lastLiveTime).total_seconds()
+            
+            if totalDiffSec >= 15:
+                self.clientTimedOut.emit()
+                self.lastLiveTime = datetime.datetime.now()
+            
+            sleep(1)
 
     # PUBLIC METHODS
     def raiseNewVideoArrived(self):
@@ -74,19 +94,53 @@ class BackendManager(QObject):
     # SLOTS
     @Slot()
     def appIsClosing(self):
+        self.cardThreadAlive = False
         self.__stopApiManager()
         self.__stopModbusManager()
+        self.runLiveListener = False
+        try:
+            if self.liveListenerThread:
+                self.liveListenerThread.stop()
+            sys.exit()
+        except:
+            pass
+
+
+    @Slot(bool)
+    def requestOsk(self, oskStatus):
+        if oskStatus == True:
+            tmpThr = HekaThread(target=self.__runEnableOsk)
+            tmpThr.start()
+        else:
+            self.oskClosed.emit()
+
+    
+    def __runEnableOsk(self):
+        sleep(0.2)
+        self.oskRequested.emit()
 
 
     @Slot()
     def restartApp(self):
         pass
 
+
+    @Slot()
+    def closeApp(self):
+        self.appCloseRequested.emit()
+
+
+    @Slot()
+    def updateLiveSignal(self):
+        self.lastLiveTime = datetime.datetime.now()
+
+
     @Slot()
     def checkMachineConfig(self):
         res = self.dbManager.checkMachineConfig()
         # self.apiManager.updateVideo()
         self.checkConfigResult.emit(res)
+
 
     # BEGIN -- CARD READING AND STATE MANAGEMENT SLOTS
     @Slot(str)

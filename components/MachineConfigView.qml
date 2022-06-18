@@ -47,6 +47,10 @@ Item {
         }));
     }
 
+    function closeApp(){
+        backend.closeApp();
+    }
+
     MessageDialog {
         id: warningDialog
         title: "UYARI"
@@ -131,6 +135,9 @@ Item {
                                         id: txtMachineCode
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
+                                        onFocusChanged: function(){
+                                            backend.requestOsk(focus);
+                                        }
                                     }
                                 }
                             }
@@ -157,6 +164,9 @@ Item {
                                         id: txtApiAddr
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
+                                        onFocusChanged: function(){
+                                            backend.requestOsk(focus);
+                                        }
                                     }
                                 }
                             }
@@ -213,6 +223,9 @@ Item {
                                         id: txtModbusServerAddr
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
+                                        onFocusChanged: function(){
+                                            backend.requestOsk(focus);
+                                        }
                                     }
                                 }
                             }
@@ -239,6 +252,9 @@ Item {
                                         id: txtDealerCode
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
+                                        onFocusChanged: function(){
+                                            backend.requestOsk(focus);
+                                        }
                                     }
                                 }
                             }
@@ -265,6 +281,9 @@ Item {
                                         id: txtPlantCode
                                         font.pixelSize: 24
                                         horizontalAlignment: Qt.AlignLeft
+                                        onFocusChanged: function(){
+                                            backend.requestOsk(focus);
+                                        }
                                     }
                                 }
                             }
@@ -324,6 +343,27 @@ Item {
                         gradient: Gradient {
                             GradientStop { position: 0 ; color: serviceButton.pressed ? "blue" : "#dedede" }
                             GradientStop { position: 1 ; color: serviceButton.pressed ? "#dedede" : "blue" }
+                        }
+                    }
+                }
+
+                // CLOSE BUTTON
+                Button{
+                    anchors.centerIn: parent
+                    onClicked: closeApp()
+                    text: "ÇIKIŞ"
+                    id:controlClose
+                    font.pixelSize: 36
+                    font.bold: true
+                    padding: 10
+                    palette.buttonText: "#fefefe"
+                    background: Rectangle {
+                        border.width: controlClose.activeFocus ? 2 : 1
+                        border.color: "green"
+                        radius: 4
+                        gradient: Gradient {
+                            GradientStop { position: 0 ; color: controlClose.pressed ? "red" : "#dedede" }
+                            GradientStop { position: 1 ; color: controlClose.pressed ? "#dedede" : "red" }
                         }
                     }
                 }

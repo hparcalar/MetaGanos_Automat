@@ -17,7 +17,7 @@ Item {
 
     function createCategories(categories){
         if (categories){
-            var perRowCount = categories.length / 2;
+            var perRowCount = Math.ceil(categories.length / 2);
             var dataIndex = 0;
 
             // fill first row
@@ -58,6 +58,7 @@ Item {
 
     // ON LOAD EVENT
     Component.onCompleted: function(){
+        backend.updateLiveSignal();
         backend.requestUserData()
         backend.requestItemCategories()
     }

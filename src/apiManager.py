@@ -7,6 +7,7 @@ from os.path import isfile, getmtime
 import os
 import json
 import requests
+import datetime
 
 class ApiManager():
     def __init__(self, backend):
@@ -19,6 +20,7 @@ class ApiManager():
         self.plantCode = ''
         self.machineId = 0
         self.configData = {}
+        self.lastUpdateDate = datetime.datetime.min
         self.runner = HekaThread(target=self.__runnerLoop)
 
 
@@ -241,6 +243,26 @@ class ApiManager():
             pass
 
 
+    def __checkLastUpdate(self) -> bool:
+        try:
+            if self.lastUpdateDate == None:
+                return True
+
+            resp = requests.get(self.apiUri + 'Plant/LastUpdate/' + self.configData['DealerCode'] + '/' + self.configData['PlantCode'],
+                    headers={ "Authorization": "Bearer " + self.token })
+            if resp.status_code == 200:
+                data = resp.text
+                if len(data) > 0:
+                    serverDate = datetime.datetime.strptime(data, '%Y-%m-%d %H:%M:%S')
+                    if serverDate > self.lastUpdateDate:
+                        return True
+
+            return False
+        except Exception as e:
+            print(e)
+            return False
+    
+
     def __runnerLoop(self):
         while self.mustRun:
             try:
@@ -252,17 +274,21 @@ class ApiManager():
                     if len(self.token) == 0:
                         self.__obtainToken()
 
-                    # update local data
-                    self.__updateMachineContent()
-                    self.__updateEmployees()
-                    self.__updateItemCategories()
-                    self.__updateItemGroups()
-                    self.__updateItems()
-                    self.__updateSpirals()
-                    self.updateVideo()
+                    if self.__checkLastUpdate() == True:
+                        # update local data
+                        self.__updateMachineContent()
+                        self.__updateEmployees()
+                        self.__updateItemCategories()
+                        self.__updateItemGroups()
+                        self.__updateItems()
+                        self.__updateSpirals()
+                        thr = HekaThread(target=self.updateVideo)
+                        thr.start()
+                        self.lastUpdateDate = datetime.datetime.now()
 
                 sleep(10)
-            except:
+            except Exception as e:
+                print(e)
                 pass
 
 

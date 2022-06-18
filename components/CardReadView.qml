@@ -19,8 +19,13 @@ Item {
             } catch (error) {
                 
             }
-            mediaPlayer.source = '../video/welcome.mp4';
-            mediaPlayer.play();
+            try{
+                mediaPlayer.source = '../video/welcome.mp4';
+                mediaPlayer.play();
+            }
+            catch (error){
+
+            }
         }
     }
 
@@ -59,6 +64,9 @@ Item {
                         autoLoad: true
                         source:"../video/welcome.mp4"
                         onStopped: mediaPlayer.play()
+                        onError: function(e){
+                            
+                        }
                     }
 
                     VideoOutput {

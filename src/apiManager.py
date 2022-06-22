@@ -200,7 +200,7 @@ class ApiManager():
                 'employeeId': int(consumeInfo['employeeId']),
                 'itemId': int(consumeInfo['itemId']),
                 'spiralNo': int(consumeInfo['spiralNo']),
-                'deliverDate': datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
             }, headers={ "Authorization": "Bearer " + self.token })
             if respDeliver.status_code == 200:
                 returnVal = True

@@ -48,6 +48,8 @@ class ModbusManager():
 
     def pushItem(self, spiralNo) -> bool:
         pushResult = { 'Result': False, 'ErrorMessage': '' }
+        # pushResult['Result'] = True
+        # return pushResult
 
         try:
             client = None

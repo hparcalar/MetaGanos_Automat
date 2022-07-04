@@ -66,6 +66,7 @@ class BackendManager(QObject):
     getActiveCredit = Signal(str)
     getCredit = Signal(str)
     getNewVideo = Signal()
+    startNewVideo = Signal()
     clientTimedOut = Signal()
     appCloseRequested = Signal()
     oskRequested = Signal()
@@ -90,6 +91,11 @@ class BackendManager(QObject):
     # PUBLIC METHODS
     def raiseNewVideoArrived(self):
         self.getNewVideo.emit()
+
+
+    def raiseStartNewVideo(self):
+        self.startNewVideo.emit()
+        
 
     # SLOTS
     @Slot()

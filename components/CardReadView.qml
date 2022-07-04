@@ -8,18 +8,25 @@ import QtGraphicalEffects 1.0
 Item {
     property StackView view
     signal moveNextStep()
+    property bool videoStopped: false
 
     Connections{
         target: backend
 
         function onGetNewVideo(){
             try {
-                mediaPlayer.source = '';
+                videoStopped = true;
                 mediaPlayer.stop();
+                mediaPlayer.source = '';
             } catch (error) {
-                
+                console.log(error);
             }
+            
+        }
+
+        function onStartNewVideo(){
             try{
+                videoStopped=false;
                 mediaPlayer.source = '../video/welcome.mp4';
                 mediaPlayer.play();
             }
@@ -63,7 +70,10 @@ Item {
                         autoPlay: true
                         autoLoad: true
                         source:"../video/welcome.mp4"
-                        onStopped: mediaPlayer.play()
+                        onStopped: function(){
+                            if (videoStopped == false)
+                                mediaPlayer.play();
+                        } 
                         onError: function(e){
                             
                         }

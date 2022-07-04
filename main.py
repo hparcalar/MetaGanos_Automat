@@ -3,6 +3,13 @@ import os
 from pathlib import Path
 import sys
 
+
+import requests
+import pymodbus.client.sync
+import pymodbus.constants
+import pymodbus.payload
+
+
 from PySide2.QtGui import QGuiApplication
 from PySide2.QtCore import QObject, Slot, Signal
 from PySide2.QtQml import QQmlApplicationEngine

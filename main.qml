@@ -369,7 +369,7 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                backend.cardReading('595B462B');
+                backend.cardReading('5690812');
                 // stack.replace(cardRead, userHome)
             }
         }
@@ -632,7 +632,9 @@ ApplicationWindow {
             id: hekaKeyboard
             visible: false
             anchors.fill: parent
-            anchors.leftMargin:mainWindow.width * 0.5
+            anchors.leftMargin:50//mainWindow.width * 0.3
+            anchors.rightMargin: 50
+            anchors.bottomMargin:100
             focus: true
         }
 

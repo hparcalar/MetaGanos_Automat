@@ -222,8 +222,10 @@ class ApiManager():
                         for chunk in resp.iter_content(chunk_size=8192): 
                             f.write(chunk)
 
-                if overwrite == False and isfile('video/welcome.mp4') and isfile('video/welcome_new.mp4'):
+                if isfile('video/welcome.mp4') and isfile('video/welcome_new.mp4'):
                     if os.stat('video/welcome.mp4').st_size != os.stat('video/welcome_new.mp4').st_size:
+                        self._backend.raiseNewVideoArrived()
+                        sleep(2)
                         os.remove('video/welcome.mp4') 
                         overwrite = True
                 else:
@@ -231,7 +233,7 @@ class ApiManager():
 
                 if overwrite == True and isfile('video/welcome_new.mp4'):
                     os.rename('video/welcome_new.mp4', 'video/welcome.mp4')
-                    self._backend.raiseNewVideoArrived()
+                    self._backend.raiseStartNewVideo()
                 else:
                     try:
                         if isfile('video/welcome_new.mp4'):

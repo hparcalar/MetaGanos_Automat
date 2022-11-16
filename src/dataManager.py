@@ -335,6 +335,31 @@ class DataManager():
             self.disconnect()
         return returnData
 
+
+    def getProperItemGroups(self, categoryId, employeeId, disconnect=True):
+        returnData = []
+        self.connect()
+        try:
+            rows = self.connection.execute("SELECT * FROM ItemGroup AS ig WHERE ItemCategoryId=" + str(categoryId) +
+                " AND EXISTS(SELECT * FROM EmployeeCredit AS cr WHERE cr.EmployeeId = "+ str(employeeId) 
+                +" AND ((cr.ItemCategoryId = ig.ItemCategoryId AND cr.ItemGroupId IS NULL) OR (cr.ItemGroupId = ig.Id))) "
+                ).fetchall()
+            for r in rows:
+                returnData.append({
+                    'Id': r[0],
+                    'ItemGroupCode': r[1],
+                    'ItemGroupName': r[2],
+                    'GroupImage': r[3],
+                    'ItemCategoryId': r[4]
+                })
+        except:
+            pass
+        
+        if disconnect:
+            self.disconnect()
+        return returnData
+
+
     def deleteItemGroup(self, groupId):
         self.connect()
         try:
@@ -362,19 +387,21 @@ class DataManager():
             
             if existingRecord is None:
                 self.connection.execute("""
-                        INSERT INTO Item(Id, ItemCode, ItemName, ItemCategoryId, ItemGroupId)
+                        INSERT INTO Item(Id, ItemCode, ItemName, ItemCategoryId, ItemGroupId, ItemImage)
                         VALUES("""+ str(item['id']) +""", '""" + item['itemCode'] + """',
-                        '"""+ item['itemName'] +"""', """+ str(item['itemCategoryId']) +""", """+ str(item['itemGroupId']) +""")""")
+                        '"""+ item['itemName'] +"""', """+ str(item['itemCategoryId']) +""", """+ str(item['itemGroupId']) +""", '"""+ (item['itemImage'] if item['itemImage'] else '') +"""')""")
             else:
                 self.connection.execute("""
                         UPDATE Item SET ItemCode='"""+ item['itemCode'] +"""',
                             ItemName='"""+ item['itemName'] +"""',
-                            ItemCategoryId="""+ str(item['itemCategoryId']) +""", ItemGroupId="""+ str(item['itemGroupId']) 
-                            +""" WHERE Id="""+ str(item['id']) +"""
+                            ItemCategoryId="""+ str(item['itemCategoryId']) +""", ItemGroupId="""+ str(item['itemGroupId']) +""", 
+                            ItemImage='"""+ (item['itemImage'] if item['itemImage'] else '')
+                            +"""' WHERE Id="""+ str(item['id']) +"""
                     """)
 
             self.connection.commit()
         except Exception as e:
+            print(e)
             pass
         self.disconnect()
 
@@ -390,7 +417,31 @@ class DataManager():
                     'ItemCode': r[1],
                     'ItemName': r[2],
                     'ItemGroupId': r[3],
-                    'ItemCategoryId': r[4]
+                    'ItemCategoryId': r[4],
+                    'ItemImage': r[5],
+                })
+        except:
+            pass
+        
+        if disconnect:
+            self.disconnect()
+        return returnData
+
+    def getProperItems(self, groupId, categoryId, employeeId, disconnect=True):
+        returnData = []
+        self.connect()
+        try:
+            rows = self.connection.execute("SELECT * FROM Item AS it WHERE ItemGroupId=" + str(groupId) + " AND " +
+                "EXISTS(SELECT * FROM EmployeeCredit AS cr WHERE cr.EmployeeId = "+ str(employeeId) +" AND cr.ActiveCredit > 0 AND ((cr.ItemCategoryId = "+ str(categoryId) +" AND cr.ItemGroupId IS NULL AND cr.ItemId IS NULL) OR (cr.ItemGroupId = it.ItemGroupId AND cr.ItemId IS NULL) OR (cr.ItemId = it.Id))) "
+                + " AND EXISTS(SELECT * FROM Spiral AS sr WHERE sr.ItemId = it.Id AND sr.ActiveQuantity > 0)").fetchall()
+            for r in rows:
+                returnData.append({
+                    'Id': r[0],
+                    'ItemCode': r[1],
+                    'ItemName': r[2],
+                    'ItemGroupId': r[3],
+                    'ItemCategoryId': r[4],
+                    'ItemImage': r[5],
                 })
         except:
             pass
@@ -427,7 +478,8 @@ class DataManager():
                     'ItemCode': r[1],
                     'ItemName': r[2],
                     'ItemGroupId': r[3],
-                    'ItemCategoryId': r[4]
+                    'ItemCategoryId': r[4],
+                    'ItemImage': r[5],
                 }
         except:
             pass
@@ -519,12 +571,20 @@ class DataManager():
         self.connect()
         try:
             self.connection.execute("DELETE FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId))
+            self.connection.commit()
+        except:
+            pass
+        self.disconnect()
+
+        self.connect()
+        try:
+            self.connection.execute("DELETE FROM EmployeeCredit WHERE EmployeeId = " + str(employeeId))
             for item in credits:
                 self.connection.execute("""
                         INSERT INTO EmployeeCredit(Id, EmployeeId, ItemCategoryId, ItemGroupId, ItemId, 
                             ActiveCredit,RangeType,RangeLength,CreditByRange,RangeCredit, CreditEndDate)
                         VALUES("""+ str(item['id']) +""", """ + str(item['employeeId']) + """,
-                        """+ str(item['itemCategoryId']) +""", """+ (str(item['itemGroupId']) if item['itemGroupId'] else 'NULL') +""", NULL, """+ 
+                        """+ str(item['itemCategoryId']) +""", """+ (str(item['itemGroupId']) if item['itemGroupId'] else 'NULL') +""", """+ (str(item['itemId']) if item['itemId'] else 'NULL') +""", """+ 
                             str(item['activeCredit']) +""", 
                         """+ (str(item['rangeType']) if item['rangeType'] else 'NULL') +""", 
                         """+ (str(item['rangeLength']) if item['rangeLength'] else 'NULL') +""",

@@ -12,7 +12,7 @@ Item {
      // ON LOAD EVENT
     Component.onCompleted: function(){
         backend.requestUserData()
-        backend.requestItems()
+        backend.requestProperItems()
     }
 
     // BACKEND SIGNALS & SLOTS
@@ -43,7 +43,7 @@ Item {
                 
                 cmpItem.createObject(itemContainer, {
                     itemId: itemObj['Id'],
-                    groupImage: itemInfo['groupImage'],
+                    groupImage: itemObj['ItemImage'],
                     itemName: itemObj['ItemName']
                 });
             }

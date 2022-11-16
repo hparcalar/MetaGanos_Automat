@@ -222,6 +222,15 @@ class BackendManager(QObject):
                 self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
 
 
+    @Slot()
+    def requestProperItemGroups(self):
+        if self.stateManager.selectedCategoryId:
+            groupsData = self.dbManager.getProperItemGroups(self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
+            if groupsData:
+                categoryObj = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
+                self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
+
+
     @Slot(int)
     def storeSelectedItemGroup(self, groupId):
         self.stateManager.selectedGroupId = groupId
@@ -237,6 +246,20 @@ class BackendManager(QObject):
                     'groupName': groupObj['ItemGroupName'], 
                     'groupImage': groupObj['GroupImage'],
                     'items': itemsData }))
+
+
+    @Slot()
+    def requestProperItems(self):
+        if self.stateManager.selectedGroupId:
+            itemsData = self.dbManager.getProperItems(self.stateManager.selectedGroupId, self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
+            if itemsData:
+                groupObj = self.dbManager.getItemGroup(self.stateManager.selectedGroupId)
+                self.getItems.emit(json.dumps({ 
+                    'groupName': groupObj['ItemGroupName'], 
+                    'groupImage': groupObj['GroupImage'],
+                    'items': itemsData }))
+
+
 
 
     @Slot(int)

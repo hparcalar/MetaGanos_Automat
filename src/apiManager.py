@@ -86,7 +86,7 @@ class ApiManager():
                 plantId = data['id']
 
             if plantId:
-                resp = requests.get(self.apiUri + 'Plant/' + str(plantId) + '/ItemCategories', 
+                resp = requests.get(self.apiUri + 'Plant/' + str(plantId) + '/ItemCategoriesNonWr', 
                     headers={ "Authorization": "Bearer " + self.token })
 
                 if resp.status_code == 200:
@@ -118,7 +118,7 @@ class ApiManager():
             categoryList = self.dbManager.getItemCategories()
 
             for cat in categoryList:
-                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/Groups', 
+                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/GroupsNonWr', 
                     headers={ "Authorization": "Bearer " + self.token })
 
                 if resp.status_code == 200:
@@ -163,7 +163,7 @@ class ApiManager():
             categoryList = self.dbManager.getItemCategories()
             
             for cat in categoryList:
-                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/Items',
+                resp = requests.get(self.apiUri + 'ItemCategory/' + str(cat['Id']) + '/ItemsNonWr',
                     headers={ "Authorization": "Bearer " + self.token })
                 
                 if resp.status_code == 200:
@@ -176,7 +176,14 @@ class ApiManager():
                             self.dbManager.deleteItem(dl['Id'])
 
                     for d in data:
-                        self.dbManager.saveItem(d)
+                        try:
+                            respDetail = requests.get(self.apiUri + 'Item/' + str(d['id']),
+                                headers={ "Authorization": "Bearer " + self.token })
+                            if respDetail.status_code == 200:
+                                detailObj = respDetail.json()
+                                self.dbManager.saveItem(detailObj)
+                        except:
+                            pass
         except Exception as e:
             pass
 
@@ -277,16 +284,16 @@ class ApiManager():
                         self.__obtainToken()
 
                     if self.__checkLastUpdate() == True:
-                        # update local data
+                    # update local data
                         self.__updateMachineContent()
                         self.__updateEmployees()
                         self.__updateItemCategories()
                         self.__updateItemGroups()
                         self.__updateItems()
                         self.__updateSpirals()
-                        thr = HekaThread(target=self.updateVideo)
-                        thr.start()
-                        self.lastUpdateDate = datetime.datetime.now()
+                        # thr = HekaThread(target=self.updateVideo)
+                        # thr.start()
+                    self.lastUpdateDate = datetime.datetime.now()
 
                 sleep(10)
             except Exception as e:

@@ -68,7 +68,8 @@ class DataMigrator():
                     ItemCode NVARCHAR(200),
                     ItemName NVARCHAR(200),
                     ItemGroupId INT,
-                    ItemCategoryId INT
+                    ItemCategoryId INT,
+                    ItemImage TEXT
                 )
             """,
             """

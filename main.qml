@@ -369,7 +369,7 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                backend.cardReading('5690812');
+                backend.cardReading('B9B70DF7');
                 // stack.replace(cardRead, userHome)
             }
         }

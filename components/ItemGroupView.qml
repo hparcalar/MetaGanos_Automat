@@ -11,7 +11,7 @@ Item {
     // ON LOAD EVENT
     Component.onCompleted: function(){
         backend.requestUserData()
-        backend.requestItemGroups()
+        backend.requestProperItemGroups()
     }
 
     function createGroups(categoryInfo){

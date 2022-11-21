@@ -72,12 +72,15 @@ Item {
             }
             contentItem: Label {
                 text:itemName
-                anchors.fill: parent
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.topMargin:2
                 font.pointSize: 24
                 font.bold: true
                 fontSizeMode: Text.HorizontalFit
                 horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                verticalAlignment: Text.AlignTop
                 wrapMode: Label.Wrap
             }
 
@@ -86,13 +89,14 @@ Item {
 
             Image {
                 visible: groupImage != null && groupImage.length > 0
-                opacity: 0.5
+                opacity: 1
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 10
-                sourceSize.width: parent.width / 4 - 13
-                sourceSize.height: parent.height / 4 - 13
+                anchors.right: parent.right
+                anchors.topMargin:30
+                sourceSize.width: parent.width - 10
+                sourceSize.height: parent.height / 2 - 13
                 
                 fillMode: Image.PreserveAspectFit
                 source: groupImage
@@ -162,6 +166,7 @@ Item {
                         styleColor:'black'
                         font.bold: false
                         text: ""
+                        visible: false
                     }
                     // #endregion
                 }

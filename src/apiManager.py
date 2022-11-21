@@ -284,16 +284,23 @@ class ApiManager():
                         self.__obtainToken()
 
                     if self.__checkLastUpdate() == True:
-                    # update local data
+                        self.lastUpdateDate = datetime.datetime.now()
+                        # update local data
+                        # print("up mac")
                         self.__updateMachineContent()
+                        # print("up emp")
                         self.__updateEmployees()
+                        # print("up cat")
                         self.__updateItemCategories()
+                        # print("up gr")
                         self.__updateItemGroups()
+                        # print("up itm")
                         self.__updateItems()
+                        # print("up spr")
                         self.__updateSpirals()
-                        # thr = HekaThread(target=self.updateVideo)
-                        # thr.start()
-                    self.lastUpdateDate = datetime.datetime.now()
+                        # print("up end")
+                        thr = HekaThread(target=self.updateVideo)
+                        thr.start()
 
                 sleep(10)
             except Exception as e:

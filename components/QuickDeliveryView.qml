@@ -118,6 +118,7 @@ Item {
                             styleColor:'black'
                             font.bold: false
                             text: ""
+                            visible: false
                         }
                         // #endregion
                     }

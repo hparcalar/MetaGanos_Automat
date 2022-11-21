@@ -67,14 +67,14 @@ Item {
             contentItem: Label {
                 text:groupName
                 anchors.fill: parent
-                font.pointSize: 24
+                font.pointSize: 18
                 font.bold: true
-                fontSizeMode: Text.HorizontalFit
+                fontSizeMode: Text.Fit
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Label.Wrap
-                style: Text.Outline
-                styleColor:'orange'
+                // style: Text.Outline
+                // styleColor:'orange'
             }
 
             height:mainColumn.height / 5 - 10
@@ -158,6 +158,7 @@ Item {
                         styleColor:'black'
                         font.bold: false
                         text: ""
+                        visible: false
                     }
                     // #endregion
                 }

@@ -247,6 +247,27 @@ class DataManager():
         self.disconnect()
         return returnData
 
+    def getProperItemCategories(self, employeeId):
+        returnData = []
+        self.connect()
+        try:
+            rows = self.connection.execute("SELECT * FROM ItemCategory AS ic "
+                " WHERE EXISTS(SELECT * FROM EmployeeCredit AS cr WHERE cr.EmployeeId = "+ str(employeeId) 
+                +" AND cr.ItemCategoryId = ic.Id)").fetchall()
+            for r in rows:
+                returnData.append({
+                    'Id': r[0],
+                    'ItemCategoryCode': r[1],
+                    'ItemCategoryName': r[2],
+                    'CategoryImage': r[3],
+                    'CreditRangeType': r[4],
+                    'CreditByRange': r[5],
+                })
+        except:
+            pass
+        self.disconnect()
+        return returnData
+
     def deleteItemCategory(self, categoryId):
         self.connect()
         try:
@@ -598,7 +619,7 @@ class DataManager():
         self.disconnect()
 
 
-    def getCreditInfo(self, employeeId, itemCategoryId, itemGroupId = None):
+    def getCreditInfo(self, employeeId, itemCategoryId, itemGroupId = None, itemId = None):
         returnData = {
             "ActiveCredit": 0,
             "RangeType": 4,
@@ -609,7 +630,10 @@ class DataManager():
         self.connect()
         try:
             r = None
-            if not itemGroupId:
+            if itemId:
+                r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE CreditEndDate >= DATE() AND EmployeeId = " + str(employeeId) 
+                    + " AND ItemId = " + str(itemId)).fetchone()
+            elif not itemGroupId:
                 r = self.connection.execute("SELECT RangeCredit, RangeType, RangeLength, CreditByRange FROM EmployeeCredit WHERE CreditEndDate >= DATE() AND EmployeeId = " + str(employeeId) 
                     + " AND ItemCategoryId = " + str(itemCategoryId)).fetchone()
             else:

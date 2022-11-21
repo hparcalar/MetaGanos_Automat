@@ -70,7 +70,7 @@ Item {
         function onGetUserData(userStr){
             var userData = JSON.parse(userStr);
             if (userData){
-                txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
+                // txtUserCode.text = 'Sicil: ' + userData['employeeCode'];
                 txtUserName.text = userData['employeeName'];
                 txtDepartmentName.text = userData['departmentName'];
             }
@@ -196,6 +196,7 @@ Item {
                         styleColor:'black'
                         font.bold: false
                         text: ""
+                        visible: false
                     }
                     // #endregion
                 }

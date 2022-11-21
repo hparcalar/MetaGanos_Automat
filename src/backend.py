@@ -196,7 +196,7 @@ class BackendManager(QObject):
     # ITEM CATEGORY & GROUP REQUESTS
     @Slot()
     def requestItemCategories(self):
-        data = self.dbManager.getItemCategories()
+        data = self.dbManager.getProperItemCategories(self.stateManager.userData['id'])
         if data:
             for d in data:
                 creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], int(d['Id']))
@@ -365,7 +365,7 @@ class BackendManager(QObject):
     def requestActiveCredit(self):
         if self.stateManager.selectedCategoryId > 0:
             creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], 
-                self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId)
+                self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId, self.stateManager.selectedItemId)
             if creditInfo:
                 rangeDesc = ''
                 rangeCredit = 0

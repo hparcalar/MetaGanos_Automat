@@ -20,6 +20,7 @@ class ApiManager():
         self.plantCode = ''
         self.machineId = 0
         self.configData = {}
+        self.creditsData = []
         self.lastUpdateDate = datetime.datetime.min
         self.runner = HekaThread(target=self.__runnerLoop)
 
@@ -28,9 +29,224 @@ class ApiManager():
         self.mustRun = True
         self.runner.start()
 
+    
+    def getItemCategories(self):
+        resultData = []
+        try:
+            # self.__obtainToken()
+
+            plantId = None
+            respFindPlant = requests.get(self.apiUri + 'Plant/Find/' + self.dealerCode + '/' + self.plantCode,
+                headers={ "Authorization": "Bearer " + self.token })
+            if respFindPlant.status_code == 200:
+                data = respFindPlant.json()
+                plantId = data['id']
+
+            if plantId:
+                resp = requests.get(self.apiUri + 'Plant/' + str(plantId) + '/ItemCategoriesNonWr', 
+                    headers={ "Authorization": "Bearer " + self.token })
+
+                if resp.status_code == 200:
+                    dataCats = resp.json()
+                    creditList = self.creditsData
+
+                    dataCats = list(filter(lambda d: len(list(filter(lambda x: int(x['itemCategoryId']) == int(d['id']), creditList))) > 0, dataCats))
+
+                    # for d in dataCats:
+                    #     try:
+                    #         respDetail = requests.get(self.apiUri + 'ItemCategory/' + str(d['id']), 
+                    #             headers={ "Authorization": "Bearer " + self.token })
+                    #         if respDetail.status_code == 200:
+                    #             detailObj = respDetail.json()
+                    #             d['categoryImage'] = detailObj['categoryImage']
+                    #     except:
+                    #         pass
+
+                    resultData = dataCats
+        except Exception as e:
+            pass
+
+        return resultData
+
+    
+    def getItemGroups(self, itemCategoryId):
+        resultData = {
+            'categoryName': '',
+            'groups': []
+        }
+        try:
+            self.__obtainToken()
+
+            catName = ''
+
+            respCat = requests.get(self.apiUri + 'ItemCategory/' + str(itemCategoryId), 
+                    headers={ "Authorization": "Bearer " + self.token })
+            if respCat.status_code == 200:
+                catName = respCat.json()['itemCategoryName']
+
+            resp = requests.get(self.apiUri + 'ItemCategory/' + str(itemCategoryId) + '/GroupsNonWr', 
+                    headers={ "Authorization": "Bearer " + self.token })
+
+            if resp.status_code == 200:
+                data = resp.json()
+
+                creditList = self.creditsData
+                data = list(filter(lambda d: len(list(filter(lambda x: x['itemGroupId'] != None and int(x['itemGroupId']) == int(d['id']) 
+                    or (int(x['itemCategoryId']) == int(itemCategoryId) and x['itemGroupId'] == None), creditList))) > 0, data))
+
+                # for d in data:
+                #     try:
+                #         respDetail = requests.get(self.apiUri + 'ItemGroup/' + str(d['id']),
+                #             headers={ "Authorization": "Bearer " + self.token })
+                #         if respDetail.status_code == 200:
+                #             detailObj = respDetail.json()
+                #             d['groupImage'] = detailObj['groupImage']
+                #     except:
+                #         pass
+                
+                resultData['categoryName'] = catName
+                resultData['groups'] = data
+        except:
+            pass
+        return resultData
+
+
+    def getItems(self, itemCategoryId, itemGroupId):
+        resultData = {
+            'groupName' : '',
+            'items': []
+        }
+        try:
+            self.__obtainToken()
+
+            grName = ''
+
+            respGr= requests.get(self.apiUri + 'ItemGroup/' + str(itemGroupId), 
+                    headers={ "Authorization": "Bearer " + self.token })
+            if respGr.status_code == 200:
+                grName = respGr.json()['itemGroupName']
+
+            resp = requests.get(self.apiUri + 'ItemGroup/' + str(itemGroupId) + '/ItemsNonWr',
+                    headers={ "Authorization": "Bearer " + self.token })
+                
+            if resp.status_code == 200:
+                data = resp.json()
+                creditList = self.creditsData
+                data = list(filter(lambda d: len(list(filter(lambda x: (x['itemId'] != None and int(x['itemId']) == int(d['id']))
+                    or (int(x['itemCategoryId']) == int(itemCategoryId) and x['itemGroupId'] == None and x['itemId'] == None)
+                    or (x['itemGroupId'] != None and int(x['itemGroupId']) == itemGroupId and x['itemId'] == None), creditList))) > 0, data))
+
+                # for d in data:
+                #     try:
+                #         respDetail = requests.get(self.apiUri + 'Item/' + str(d['id']),
+                #             headers={ "Authorization": "Bearer " + self.token })
+                #         if respDetail.status_code == 200:
+                #             detailObj = respDetail.json()
+                #             d['itemImage'] = detailObj['itemImage']
+                #     except:
+                #         pass
+                # print(data)
+                resultData['groupName'] = grName
+                resultData['items'] = data
+        except Exception as e: print(e)
+        return resultData
+
+
+    def getSpirals(self, itemId):
+        resultData = {
+            'itemName' : '',
+            'spirals': []
+        }
+        try:
+            self.__obtainToken()
+
+            itemName = ''
+
+            respItem= requests.get(self.apiUri + 'Item/' + str(itemId), 
+                    headers={ "Authorization": "Bearer " + self.token })
+            if respItem.status_code == 200:
+                itemName = respItem.json()['itemName']
+
+            resp = requests.get(self.apiUri + 'Machine/' + str(self.machineId) + '/MachineSpiralContents',
+                headers={ "Authorization": "Bearer " + self.token })
+            
+            if resp.status_code == 200:
+                data = resp.json()
+
+            resultData['itemName'] = itemName
+            resultData['spirals'] = data
+        except:
+            pass
+        return resultData
+
+
+    def fetchCredits(self, employeeId):
+        try:
+            self.__obtainToken()
+
+            resp = requests.get(self.apiUri + 'Employee/' + str(employeeId) + '/FetchCredits',
+                headers={ "Authorization": "Bearer " + self.token })
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                self.creditsData = data
+        except: pass
+
+
+    def checkCredits(self, consumeInfo):
+        returnVal = False
+        try:
+            respDeliver = requests.post(self.apiUri + 'Machine/'+ str(self.machineId) +'/CheckCreditsForDelivery', json={
+                'employeeId': int(consumeInfo['employeeId']),
+                'itemId': int(consumeInfo['itemId']),
+                'spiralNo': int(consumeInfo['spiralNo']),
+                'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+            }, headers={ "Authorization": "Bearer " + self.token })
+            if respDeliver.status_code == 200:
+                data = respDeliver.json()
+                returnVal = data['result']
+        except Exception as e:
+            pass
+        return returnVal
+
+
+    def getCreditInfo(self, employeeId, itemCategoryId, itemGroupId = None, itemId = None):
+        returnData = {
+            "ActiveCredit": 0,
+            "RangeType": 4,
+            "RangeLength": 1,
+            "CreditByRange": 0,
+        }
+
+        try:
+            r = None
+            if itemId:
+                r = list(filter(lambda d: d['itemId'] == itemId 
+                or (d['itemGroupId'] == itemGroupId and d['itemId'] == None) 
+                or (d['itemCategoryId'] == itemCategoryId and d['itemId'] == None and d['itemGroupId'] == None),self.creditsData))[0]
+            elif itemGroupId:
+                r = list(filter(lambda d: d['itemGroupId'] == itemGroupId 
+                or (d['itemCategoryId'] == itemCategoryId and d['itemGroupId'] == None),self.creditsData))[0]
+            else:
+                 r = list(filter(lambda d: d['itemCategoryId'] == itemCategoryId,self.creditsData))[0]
+
+            if r:
+                returnData['ActiveCredit'] = int(r['rangeCredit'])
+                returnData['RangeType'] = (int(r['rangeType']) if r['rangeType'] else 4)
+                returnData['RangeLength'] = (int(r['rangeLength']) if r['rangeLength'] else 1)
+                returnData['CreditByRange'] = (int(r['creditByRange']) if r['creditByRange'] else 0)
+        except:
+            pass
+
+        return returnData
+
 
     def __obtainToken(self):
         try:
+            self.configData = self.dbManager.getMachineConfig()
+            if self.configData:
+                self.apiUri = self.configData['ApiAddr']
+
             self.dealerCode = self.configData['DealerCode']
             self.plantCode = self.configData['PlantCode']
 
@@ -66,6 +282,7 @@ class ApiManager():
                 for d in data:
                     saveResult = self.dbManager.saveEmployee(d)
                     if saveResult:
+                        print(str(d['employeeName']))
                         respDetail = requests.get(self.apiUri + 'Employee/' + str(d['id']),
                             headers={ "Authorization": "Bearer " + self.token })
                         if respDetail.status_code == 200:
@@ -199,6 +416,23 @@ class ApiManager():
         except Exception as e:
             pass
 
+    def getMachineInfo(self):
+        machineData = {
+            'Rows': 0,
+            'Cols': 0,
+        }
+        try:
+            resp = requests.get(self.apiUri + 'Machine/' + str(self.machineId),
+                headers={ "Authorization": "Bearer " + self.token })
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                machineData['Rows'] = data['rows']
+                machineData['Cols'] = data['cols']
+        except Exception as e:
+            pass
+        return machineData
+
 
     def sendSpiralConsuming(self, consumeInfo) -> bool:
         returnVal = False
@@ -280,29 +514,29 @@ class ApiManager():
                     self.apiUri = self.configData['ApiAddr']
 
                     # obtain api token
-                    if len(self.token) == 0:
-                        self.__obtainToken()
+                    # if len(self.token) == 0:
+                    self.__obtainToken()
 
                     if self.__checkLastUpdate() == True:
                         self.lastUpdateDate = datetime.datetime.now()
                         # update local data
                         # print("up mac")
-                        self.__updateMachineContent()
+                        # self.__updateMachineContent()
                         # print("up emp")
-                        self.__updateEmployees()
+                        # self.__updateEmployees()
                         # print("up cat")
-                        self.__updateItemCategories()
+                        # self.__updateItemCategories()
                         # print("up gr")
-                        self.__updateItemGroups()
+                        # self.__updateItemGroups()
                         # print("up itm")
-                        self.__updateItems()
+                        # self.__updateItems()
                         # print("up spr")
-                        self.__updateSpirals()
+                        # self.__updateSpirals()
                         # print("up end")
                         thr = HekaThread(target=self.updateVideo)
                         thr.start()
 
-                sleep(10)
+                sleep(35)
             except Exception as e:
                 print(e)
                 pass

@@ -5,7 +5,8 @@ import sys
 
 
 import requests
-import pymodbus.client.sync
+import pymodbus.client.tcp
+import pymodbus.client.serial
 import pymodbus.constants
 import pymodbus.payload
 

@@ -1,7 +1,9 @@
 from threading import Thread
 from src.hkThread import HekaThread
-from pymodbus.client.sync import ModbusTcpClient
-from pymodbus.client.sync import ModbusSerialClient
+from pymodbus.client.tcp import ModbusTcpClient
+from pymodbus.client.serial import ModbusSerialClient
+# from pymodbus.client.sync import ModbusTcpClient
+# from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder

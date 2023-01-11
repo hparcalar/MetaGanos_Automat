@@ -22,9 +22,9 @@ Item {
                 const group = categoryInfo['groups'][i];
                 
                 cmpGroup.createObject(groupContainer, {
-                    groupId: group['Id'],
-                    groupName: group['ItemGroupName'],
-                    groupImage: group['GroupImage'],
+                    groupId: group['id'],
+                    groupName: group['itemGroupName'],
+                    groupImage: group['groupImage'],
                 });
             }
         }

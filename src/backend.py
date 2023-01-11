@@ -29,6 +29,7 @@ class BackendManager(QObject):
         self.cardKeyThread = None
         self.cardKeyLastRead = datetime.datetime.now()
         self.lastLiveTime = datetime.datetime.now()
+        self.currentSpirals = []
         self.runLiveListener = True
         self.liveListenerThread = HekaThread(target=self.__loopLiveListener)
         self.liveListenerThread.start()
@@ -71,6 +72,8 @@ class BackendManager(QObject):
     appCloseRequested = Signal()
     oskRequested = Signal()
     oskClosed = Signal()
+    backendProcStarted = Signal()
+    backendProcFinished = Signal()
 
 
     # MODBUS HANDLERS
@@ -163,7 +166,9 @@ class BackendManager(QObject):
         while (datetime.datetime.now() - self.cardKeyLastRead).total_seconds() * 1000 <= 750:
             pass
         if len(self.cardKey) > 0:
+            self.backendProcStarted.emit()
             loginResult = self.stateManager.loginByCard(self.cardKey)
+            self.backendProcFinished.emit()
             self.cardLoggedIn.emit(loginResult)
             self.cardKey = ''
         self.cardThreadAlive = False
@@ -196,16 +201,13 @@ class BackendManager(QObject):
     # ITEM CATEGORY & GROUP REQUESTS
     @Slot()
     def requestItemCategories(self):
-        data = self.dbManager.getProperItemCategories(self.stateManager.userData['id'])
-        if data:
-            for d in data:
-                creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], int(d['Id']))
-                if creditInfo:
-                    d['ActiveCredit'] = creditInfo['ActiveCredit']
-                else:
-                    d['ActiveCredit'] = 0
+        # self.backendProcStarted.emit()
+        userData = self.stateManager.getUserData()
+        self.apiManager.fetchCredits(userData['id'])
 
-            self.getItemCategories.emit(json.dumps(data))
+        data = self.apiManager.getItemCategories()
+        # self.backendProcFinished.emit()
+        self.getItemCategories.emit(json.dumps(data))
 
 
     @Slot(int)
@@ -216,19 +218,28 @@ class BackendManager(QObject):
     @Slot()
     def requestItemGroups(self):
         if self.stateManager.selectedCategoryId:
-            groupsData = self.dbManager.getItemGroups(self.stateManager.selectedCategoryId)
-            if groupsData:
-                categoryObj = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
-                self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
+            data = self.apiManager.getItemGroups(self.stateManager.selectedCategoryId)
+            self.getItemGroups.emit(json.dumps({ 'categoryName': '', 'groups': data }))
+        # if self.stateManager.selectedCategoryId:
+        #     groupsData = self.dbManager.getItemGroups(self.stateManager.selectedCategoryId)
+        #     if groupsData:
+        #         categoryObj = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
+        #         self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
 
 
     @Slot()
     def requestProperItemGroups(self):
+        # self.backendProcStarted.emit()
         if self.stateManager.selectedCategoryId:
-            groupsData = self.dbManager.getProperItemGroups(self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
-            if groupsData:
-                categoryObj = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
-                self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
+            data = self.apiManager.getItemGroups(self.stateManager.selectedCategoryId)
+            self.getItemGroups.emit(json.dumps({ 'categoryName': data['categoryName'], 'groups': data['groups'] }))
+
+        # self.backendProcFinished.emit()
+        # if self.stateManager.selectedCategoryId:
+        #     groupsData = self.dbManager.getProperItemGroups(self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
+        #     if groupsData:
+        #         categoryObj = self.dbManager.getItemCategory(self.stateManager.selectedCategoryId)
+        #         self.getItemGroups.emit(json.dumps({ 'categoryName': categoryObj['ItemCategoryName'], 'groups': groupsData }))
 
 
     @Slot(int)
@@ -243,21 +254,31 @@ class BackendManager(QObject):
             if itemsData:
                 groupObj = self.dbManager.getItemGroup(self.stateManager.selectedGroupId)
                 self.getItems.emit(json.dumps({ 
-                    'groupName': groupObj['ItemGroupName'], 
+                    'groupName': groupObj['ItemGroupName'],
                     'groupImage': groupObj['GroupImage'],
                     'items': itemsData }))
 
 
     @Slot()
     def requestProperItems(self):
+        # self.backendProcStarted.emit()
         if self.stateManager.selectedGroupId:
-            itemsData = self.dbManager.getProperItems(self.stateManager.selectedGroupId, self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
-            if itemsData:
-                groupObj = self.dbManager.getItemGroup(self.stateManager.selectedGroupId)
-                self.getItems.emit(json.dumps({ 
-                    'groupName': groupObj['ItemGroupName'], 
-                    'groupImage': groupObj['GroupImage'],
-                    'items': itemsData }))
+            data = self.apiManager.getItems(self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId)
+            self.getItems.emit(json.dumps({ 
+            'groupName': data['groupName'], 
+            'groupImage': '',
+            'items': data['items'] }))
+
+        # self.backendProcFinished.emit()
+
+        # if self.stateManager.selectedGroupId:
+        #     itemsData = self.dbManager.getProperItems(self.stateManager.selectedGroupId, self.stateManager.selectedCategoryId, self.stateManager.userData['id'])
+        #     if itemsData:
+        #         groupObj = self.dbManager.getItemGroup(self.stateManager.selectedGroupId)
+        #         self.getItems.emit(json.dumps({ 
+        #             'groupName': groupObj['ItemGroupName'], 
+        #             'groupImage': groupObj['GroupImage'],
+        #             'items': itemsData }))
 
 
 
@@ -269,6 +290,8 @@ class BackendManager(QObject):
 
     @Slot()
     def requestProperSpirals(self):
+        # self.backendProcStarted.emit()
+
         spiralDesign = {
             "Rows": 0,
             "Cols": 0,
@@ -277,23 +300,33 @@ class BackendManager(QObject):
             "AllSpirals": [],
         }
 
-        machineContent = self.dbManager.getMachineConfig()
+        machineContent = self.apiManager.getMachineInfo() # self.dbManager.getMachineConfig()
         if machineContent:
             spiralDesign["Rows"] = int(machineContent['Rows'])
             spiralDesign["Cols"] = int(machineContent['Cols'])
 
         if self.stateManager.selectedItemId:
-            itemData = self.dbManager.getItem(self.stateManager.selectedItemId)
-            if itemData:
-                spiralDesign['ItemName'] = itemData['ItemName']
+            data = self.apiManager.getSpirals(self.stateManager.selectedItemId)
+            spiralDesign['RelatedSpirals'] = list(filter(lambda d: d['itemId'] == self.stateManager.selectedItemId, data['spirals']))
+            spiralDesign['AllSpirals'] = data['spirals']
+            spiralDesign['ItemName'] = data['itemName']
+            self.currentSpirals = data['spirals']
+            
 
-            spiralData = self.dbManager.getProperSpirals(self.stateManager.selectedItemId)
-            if spiralData and len(spiralData) > 0:
-                spiralDesign["RelatedSpirals"] = spiralData
+        # if self.stateManager.selectedItemId:
+        #     itemData = self.dbManager.getItem(self.stateManager.selectedItemId)
+        #     if itemData:
+        #         spiralDesign['ItemName'] = itemData['ItemName']
 
-            allSpirals = self.dbManager.getAllSpirals()
-            if allSpirals:
-                spiralDesign['AllSpirals'] = allSpirals
+        #     spiralData = self.dbManager.getProperSpirals(self.stateManager.selectedItemId)
+        #     if spiralData and len(spiralData) > 0:
+        #         spiralDesign["RelatedSpirals"] = spiralData
+
+        #     allSpirals = self.dbManager.getAllSpirals()
+        #     if allSpirals:
+        #         spiralDesign['AllSpirals'] = allSpirals
+
+        # self.backendProcFinished.emit()
 
         self.getProperSpirals.emit(json.dumps(spiralDesign))
 
@@ -328,13 +361,24 @@ class BackendManager(QObject):
         self.stateManager.pushProcessFinished = False
 
         try:
-            spiralInfo = self.dbManager.getSpiralInfo(spiralNo)
+            spiralsData = self.apiManager.getAllSpirals()
+            self.currentSpirals = spiralsData['spirals']
+
+            spiralInfo = list(filter(lambda d: int(d['posOrders']) == int(spiralNo), self.currentSpirals))[0] # self.dbManager.getSpiralInfo(spiralNo)
             if spiralInfo is None:
                 raise Exception("Spiral bilgisi bulunamadı.")
 
-            hasRights = self.dbManager.checkEmployeeHasCredit(int(self.stateManager.userData['id']), 
-                int(spiralInfo['ItemCategoryId']) if spiralInfo['ItemCategoryId'] else 0,
-                int(spiralInfo['ItemGroupId']) if spiralInfo['ItemGroupId'] else None)
+            # hasRights = False
+            # self.dbManager.checkEmployeeHasCredit(int(self.stateManager.userData['id']), 
+            #     int(spiralInfo['ItemCategoryId']) if spiralInfo['ItemCategoryId'] else 0,
+            #     int(spiralInfo['ItemGroupId']) if spiralInfo['ItemGroupId'] else None)
+
+            hasRights = self.apiManager.checkCredits({
+                        'employeeId': self.stateManager.userData['id'],
+                        'itemId': spiralInfo['itemId'],
+                        'spiralNo': int(spiralNo)
+                    })
+
             if not hasRights:
                 raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")
             else:
@@ -349,11 +393,11 @@ class BackendManager(QObject):
                 else:
                     postResult = self.apiManager.sendSpiralConsuming({
                         'employeeId': self.stateManager.userData['id'],
-                        'itemId': spiralInfo['ItemId'],
+                        'itemId': spiralInfo['itemId'],
                         'spiralNo': int(spiralNo)
                     })
-                    self.dbManager.consumeCredit(int(self.stateManager.userData['id']), 
-                        int(spiralInfo['ItemCategoryId']), 1 if postResult else 0)
+                    # self.dbManager.consumeCredit(int(self.stateManager.userData['id']), 
+                    #     int(spiralInfo['itemCategoryId']), 1 if postResult else 0)
                     self.getPushSpiralResult.emit(json.dumps({ "Result": True }))
         except Exception as e:
             self.getPushSpiralResult.emit(json.dumps({ "Result": False, "ErrorMessage": str(e) }))
@@ -364,8 +408,10 @@ class BackendManager(QObject):
     @Slot()
     def requestActiveCredit(self):
         if self.stateManager.selectedCategoryId > 0:
-            creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'], 
-                self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId, self.stateManager.selectedItemId)
+            creditInfo = self.apiManager.getCreditInfo(self.stateManager.userData['id'], 
+                 self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId, self.stateManager.selectedItemId)
+            # self.dbManager.getCreditInfo(self.stateManager.userData['id'], 
+            #     self.stateManager.selectedCategoryId, self.stateManager.selectedGroupId, self.stateManager.selectedItemId)
             if creditInfo:
                 rangeDesc = ''
                 rangeCredit = 0
@@ -392,7 +438,9 @@ class BackendManager(QObject):
     @Slot(int)
     def requestCredit(self, itemCategoryId):
         if itemCategoryId > 0:
-            creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'],
+            creditInfo = self.apiManager.getCreditInfo(self.stateManager.userData['id'],
                 itemCategoryId)
+            # creditInfo = self.dbManager.getCreditInfo(self.stateManager.userData['id'],
+            #     itemCategoryId)
             if creditInfo:
                 self.getCredit.emit(json.dumps(creditInfo))

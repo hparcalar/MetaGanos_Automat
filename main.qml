@@ -270,6 +270,14 @@ ApplicationWindow {
             }
         }
 
+        function onBackendProcStarted(){
+            popupWaitForProcess.open();
+        }
+
+        function onBackendProcFinished(){
+            popupWaitForProcess.close();
+        }
+
         function onCardLoggedIn(result){
             backend.updateLiveSignal();
 
@@ -369,7 +377,7 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                // backend.cardReading('12005452');
+                backend.cardReading('1004257037');
                 // stack.replace(cardRead, userHome)
             }
         }
@@ -550,6 +558,33 @@ ApplicationWindow {
             font.pixelSize: 24
             font.bold: true
             padding: 5
+        }
+    }
+
+    Popup {
+        id: popupWaitForProcess
+        modal: true
+        dim: true
+        Overlay.modal: Rectangle {
+            color: "#aacfdbe7"
+        }
+
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        width: 300
+        height: 300
+
+        Label{
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            text:'Yükleniyor'
+            font.bold: true
+        }
+
+        BusyIndicator {
+            id: loadingIndicatorProc
+            anchors.centerIn: parent
+            running: true
         }
     }
 

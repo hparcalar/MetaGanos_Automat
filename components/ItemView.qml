@@ -42,9 +42,9 @@ Item {
                 const itemObj = itemInfo['items'][i];
                 
                 cmpItem.createObject(itemContainer, {
-                    itemId: itemObj['Id'],
-                    groupImage: itemObj['ItemImage'],
-                    itemName: itemObj['ItemName']
+                    itemId: itemObj['id'],
+                    groupImage: itemObj['itemImage'],
+                    itemName: itemObj['itemName']
                 });
             }
         }

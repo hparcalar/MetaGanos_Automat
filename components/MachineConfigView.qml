@@ -90,7 +90,7 @@ Item {
                     style: Text.Outline
                     styleColor:'#fff'
                     font.bold: true
-                    text: "MAKİNE BAŞLANGIÇ AYARLARI"
+                    text: "AYARLAR - V2.05"
                 }
             }
 
@@ -105,7 +105,7 @@ Item {
                     anchors.fill: parent
 
                     Rectangle{
-                        Layout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width * 0.9
                         Layout.fillHeight: true
                         color:"transparent"
 
@@ -299,7 +299,7 @@ Item {
 
                     // right part of the form for empty slots
                     Rectangle{
-                        Layout.preferredWidth: parent.width / 2
+                        Layout.preferredWidth: parent.width * 0.1
                         Layout.fillHeight: true
                         color:"transparent"
 

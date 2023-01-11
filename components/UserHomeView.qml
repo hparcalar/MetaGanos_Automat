@@ -28,11 +28,11 @@ Item {
                 var cat = categories[dataIndex];
 
                 cmpItemCategory.createObject(topCategoryPanel, {
-                    categoryId: cat['Id'],
-                    categoryName: cat['ItemCategoryName'],
-                    categoryImage: cat['CategoryImage'],
+                    categoryId: cat['id'],
+                    categoryName: cat['itemCategoryName'],
+                    categoryImage: cat['categoryImage'],
                     perRowCount: perRowCount,
-                    activeCredit: cat['ActiveCredit'],
+                    activeCredit: cat['activeCredit'],
                 })
                 dataIndex++;
             }
@@ -45,10 +45,10 @@ Item {
                 var cat = categories[dataIndex];
 
                 cmpItemCategory.createObject(bottomCategoryPanel, {
-                    categoryId: cat['Id'],
-                    categoryName: cat['ItemCategoryName'],
-                    categoryImage: cat['CategoryImage'],
-                    activeCredit: cat['ActiveCredit'],
+                    categoryId: cat['id'],
+                    categoryName: cat['itemCategoryName'],
+                    categoryImage: cat['categoryImage'],
+                    activeCredit: cat['activeCredit'],
                     perRowCount: perRowCount,
                 })
                 dataIndex++;

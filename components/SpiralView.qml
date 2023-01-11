@@ -154,9 +154,9 @@ Item {
             try {
                 var spiralData = allSpirals[spiralIndex];
                 spiralCircle.createObject(spiralFlow, { 
-                    buttonText: spiralData['SpiralNo'].toString(),
+                    buttonText: spiralData['posOrders'].toString(),
                     buttonSize: minimumFit,
-                    isRelated: relatedOnes.some(m => parseInt(m['SpiralNo']) == parseInt(spiralData['SpiralNo']))
+                    isRelated: relatedOnes.some(m => parseInt(m['posOrders']) == parseInt(spiralData['posOrders']))
                 });
             } catch (error) {
                 

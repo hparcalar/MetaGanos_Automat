@@ -21,6 +21,8 @@ ApplicationWindow {
     }
 
     property int loginState: 0
+    property bool spiralIsLoading: false
+    property string warningMessage: ''
 
     // LOGIN WARNING MESSAGE
     Timer {
@@ -50,7 +52,7 @@ ApplicationWindow {
     MessageDialog {
         id: warningDialog
         title: "HATALI GİRİŞ"
-        text: "KART BİLGİLERİNİZ GEÇERLİ DEĞİL"
+        text: warningMessage //"KART BİLGİLERİNİZ GEÇERLİ DEĞİL"
         icon: StandardIcon.Warning
         onAccepted: {
             warningDialog.visible = false;
@@ -281,10 +283,13 @@ ApplicationWindow {
         function onCardLoggedIn(result){
             backend.updateLiveSignal();
 
-            if (result){
+            var resObj = JSON.parse(result);
+
+            if (resObj != null && resObj.result){
                 stack.replace(cardRead, userHome)
             }
             else{
+                warningMessage = resObj != null ? resObj.message : 'KART BİLGİLERİNİZ GEÇERLİ DEĞİL';
                 warningDialog.visible = true;
                 tmrWarning.running = true;
             }
@@ -314,6 +319,13 @@ ApplicationWindow {
                 // pushErrorDialog.visible = true;
                 // tmrPushError.running = true;
             }
+
+            spiralIsLoading = false;
+        }
+
+        function onAutoLoginTriggered(cardNo){
+            // console.log(cardNo);
+            backend.cardReading(cardNo);
         }
     }
 
@@ -377,7 +389,8 @@ ApplicationWindow {
         CardReadView{
             view: stack
             onMoveNextStep: function(){
-                backend.cardReading('1004257037');
+                // # manuel kart okutma
+                // backend.cardReading('1457484814');
                 // stack.replace(cardRead, userHome)
             }
         }
@@ -445,20 +458,23 @@ ApplicationWindow {
                 stack.replace(spiralView, itemsView)
             }
             onSelectSpiral: function(spiralNo){
-                backend.updateLiveSignal();
-                txtProcessResult.text = '';
-                popupLoading.open();
-                var requested = false;
-                delay(500, function(){
-                    try{
-                        if (!requested){
-                            requested = true;
-                            backend.requestPushSpiral(parseInt(spiralNo));
-                        }
-                    } catch(err){
+                if (spiralIsLoading == false){
+                    spiralIsLoading = true;
+                    backend.updateLiveSignal();
+                    txtProcessResult.text = '';
+                    popupLoading.open();
+                    var requested = false;
+                    delay(500, function(){
+                        try{
+                            if (!requested){
+                                requested = true;
+                                backend.requestPushSpiral(parseInt(spiralNo));
+                            }
+                        } catch(err){
 
-                    }
-                });
+                        }
+                    });
+                }
             }
         }
     }

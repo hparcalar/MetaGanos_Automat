@@ -13,6 +13,7 @@ from src.stateManager import StateManager
 from src.modbusManager import ModbusManager
 from threading import Thread
 import datetime
+import requests
 
 
 class BackendManager(QObject):
@@ -24,6 +25,7 @@ class BackendManager(QObject):
         self.stateManager = StateManager()
         self.modbusManager = ModbusManager(self)
         self.apiManager.listen()
+        self.isCreditsVisible = True
         self.cardKey = ''
         self.cardThreadAlive = False
         self.cardKeyThread = None
@@ -33,6 +35,8 @@ class BackendManager(QObject):
         self.runLiveListener = True
         self.liveListenerThread = HekaThread(target=self.__loopLiveListener)
         self.liveListenerThread.start()
+        self.loginListenerThread = HekaThread(target=self.__loopLoginListener)
+        self.loginListenerThread.start()
 
     def __stopApiManager(self):
         if self.apiManager:
@@ -53,7 +57,7 @@ class BackendManager(QObject):
     # SIGNALS
     configSaved = Signal(bool)
     checkConfigResult = Signal(bool)
-    cardLoggedIn = Signal(bool)
+    cardLoggedIn = Signal(str)
     userLoggedOut = Signal()
     getUserData = Signal(str)
     getMachineConfig = Signal(str)
@@ -74,6 +78,8 @@ class BackendManager(QObject):
     oskClosed = Signal()
     backendProcStarted = Signal()
     backendProcFinished = Signal()
+    responseCreditsVisible = Signal(bool)
+    autoLoginTriggered = Signal(str)
 
 
     # MODBUS HANDLERS
@@ -90,6 +96,24 @@ class BackendManager(QObject):
                 self.lastLiveTime = datetime.datetime.now()
             
             sleep(1)
+
+    
+    def __loopLoginListener(self):
+        while self.runLiveListener == True:
+            self.__checkAutoLogin()
+            sleep(1)
+
+
+    def __checkAutoLogin(self):
+        try:
+            resp = requests.get(self.apiManager.apiUri + 'ExternalCardRead/'+ str(self.apiManager.machineId))
+            if resp.status_code == 200:
+                rData = resp.json()
+                if (rData['cardNo'] and len(rData['cardNo']) > 0):
+                    self.autoLoginTriggered.emit(rData['cardNo'])
+
+        except Exception as e:
+            pass
 
     # PUBLIC METHODS
     def raiseNewVideoArrived(self):
@@ -169,7 +193,7 @@ class BackendManager(QObject):
             self.backendProcStarted.emit()
             loginResult = self.stateManager.loginByCard(self.cardKey)
             self.backendProcFinished.emit()
-            self.cardLoggedIn.emit(loginResult)
+            self.cardLoggedIn.emit(json.dumps(loginResult))
             self.cardKey = ''
         self.cardThreadAlive = False
         self.cardKey = ''
@@ -191,6 +215,11 @@ class BackendManager(QObject):
         confObj = self.dbManager.getMachineConfig()
         self.getMachineConfig.emit(json.dumps(confObj))
 
+    @Slot()
+    def requestCreditsVisible(self):
+        resp = self.isCreditsVisible
+        
+        self.responseCreditsVisible.emit(resp)
 
     @Slot(str)
     def saveMachineConfig(self, config):
@@ -206,6 +235,7 @@ class BackendManager(QObject):
         self.apiManager.fetchCredits(userData['id'])
 
         data = self.apiManager.getItemCategories()
+        self.isCreditsVisible = self.apiManager.getCreditsIsVisible()
         # self.backendProcFinished.emit()
         self.getItemCategories.emit(json.dumps(data))
 
@@ -378,6 +408,7 @@ class BackendManager(QObject):
                         'itemId': spiralInfo['itemId'],
                         'spiralNo': int(spiralNo)
                     })
+            print(hasRights)
 
             if not hasRights:
                 raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")

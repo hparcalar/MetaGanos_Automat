@@ -21,6 +21,7 @@ class ApiManager():
         self.machineId = 0
         self.configData = {}
         self.creditsData = []
+        self.isCreditsVisible = True
         self.lastUpdateDate = datetime.datetime.min
         self.runner = HekaThread(target=self.__runnerLoop)
 
@@ -29,6 +30,8 @@ class ApiManager():
         self.mustRun = True
         self.runner.start()
 
+    def getCreditsIsVisible(self):
+        return self.isCreditsVisible
     
     def getItemCategories(self):
         resultData = []
@@ -43,6 +46,9 @@ class ApiManager():
                 plantId = data['id']
 
             if plantId:
+                if not data['isCreditsVisible'] is None:
+                    self.isCreditsVisible = data['isCreditsVisible']
+
                 spiralList = self.getAllSpirals()['spirals']
 
                 resp = requests.get(self.apiUri + 'Plant/' + str(plantId) + '/ItemCategoriesNonWr', 
@@ -232,12 +238,13 @@ class ApiManager():
                 'employeeId': int(consumeInfo['employeeId']),
                 'itemId': int(consumeInfo['itemId']),
                 'spiralNo': int(consumeInfo['spiralNo']),
-                'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                #'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
             }, headers={ "Authorization": "Bearer " + self.token })
             if respDeliver.status_code == 200:
                 data = respDeliver.json()
                 returnVal = data['result']
         except Exception as e:
+            print(e)
             pass
         return returnVal
 
@@ -456,7 +463,7 @@ class ApiManager():
                 'employeeId': int(consumeInfo['employeeId']),
                 'itemId': int(consumeInfo['itemId']),
                 'spiralNo': int(consumeInfo['spiralNo']),
-                'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                #'deliverDate': datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
             }, headers={ "Authorization": "Bearer " + self.token })
             if respDeliver.status_code == 200:
                 returnVal = True
@@ -569,7 +576,7 @@ class ApiManager():
                         thr = HekaThread(target=self.updateVideo)
                         thr.start()
 
-                sleep(35)
+                sleep(60 * 90)
             except Exception as e:
                 print(e)
                 pass

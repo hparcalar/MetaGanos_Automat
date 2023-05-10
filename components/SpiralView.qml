@@ -10,6 +10,10 @@ Item {
     signal moveBack()
     signal selectSpiral(int spiralNo)
 
+    property bool spiralIsProcessing: false
+    property bool creditsVisible: true
+    property var selectedSpiralObject: null
+
     // BACKEND SIGNALS & SLOTS
     Connections {
         target: backend
@@ -29,6 +33,10 @@ Item {
             createSpirals(spiralDesign.Rows, spiralDesign.Cols, spiralDesign.RelatedSpirals, spiralDesign.AllSpirals);
         }
 
+        function onResponseCreditsVisible(isCreditsVisible){
+            creditsVisible = isCreditsVisible;
+        }
+
         function onGetActiveCredit(creditInfo){
             if (creditInfo){
                 const creditObj = JSON.parse(creditInfo);
@@ -44,9 +52,14 @@ Item {
                 txtRemainingCredit.text = 'Kalan İstihkak: ' + creditObj['ActiveCredit'].toString();
             }
         }
+
+        function onGetPushSpiralResult(spiralInfo){
+            spiralIsProcessing = false;
+        }
     }
 
     function clickSpiral(spiralNo, isRelated){
+        spiralIsProcessing = true;
         if (isRelated == false){
             warningDialog.visible = true;
             tmrWarning.running = true;
@@ -88,6 +101,8 @@ Item {
         }
     }
 
+    Timer { id: tmrSpiral }
+
     MessageDialog {
         id: pushErrorDialog
         title: "İLETİŞİM HATASI"
@@ -107,7 +122,20 @@ Item {
             property int buttonSize
             property bool isRelated: false
 
-            onClicked: clickSpiral(parseInt(buttonText), isRelated)
+            onClicked: function(){
+                this.enabled = false
+                selectedSpiralObject = this;
+                clickSpiral(parseInt(buttonText), isRelated)
+                tmrSpiral.interval = 3000 
+                tmrSpiral.triggered.connect(callback)
+                tmrSpiral.start()
+            }
+
+            function callback(event) {
+                tmrSpiral.triggered.disconnect(callback)
+                if (selectedSpiralObject != null)
+                    selectedSpiralObject.enabled = true
+            }
 
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredHeight: buttonSize
@@ -126,6 +154,7 @@ Item {
                 wrapMode: Label.Wrap
                 fontSizeMode: Text.Fit
             }
+            // enabled: !spiralIsProcessing
             font.bold: true
             height: buttonSize
             width: buttonSize
@@ -134,6 +163,7 @@ Item {
 
     // ON LOAD EVENT
     Component.onCompleted: function(){
+        backend.requestCreditsVisible();
         backend.requestUserData()
         backend.requestProperSpirals()
         backend.requestActiveCredit()
@@ -283,12 +313,14 @@ Item {
 
             // CREDIT INFORMATION PANEL
             Rectangle{
+                visible: creditsVisible
                 id: pnlRangeOfCredit
                 Layout.fillWidth: true
-                Layout.preferredHeight: 60
+                Layout.preferredHeight: creditsVisible ? 60 : 0
                 color:"#c8cacc"
 
                 Text {
+                    visible: creditsVisible
                     id: txtRangeOfCredit
                     anchors.fill: parent
                     horizontalAlignment: Text.AlignHCenter
@@ -306,11 +338,13 @@ Item {
             }
 
             Rectangle{
+                visible: creditsVisible
                 Layout.fillWidth: true
-                Layout.preferredHeight: 60
+                Layout.preferredHeight: creditsVisible ? 60 : 0
                 color:"#52c908"
 
                 Text {
+                    visible: creditsVisible
                     id: txtRemainingCredit
                     anchors.fill: parent
                     horizontalAlignment: Text.AlignHCenter

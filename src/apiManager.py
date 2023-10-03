@@ -194,7 +194,7 @@ class ApiManager():
 
 
     def checkCredits(self, consumeInfo):
-        returnVal = False
+        returnVal = [False,""]
         try:
             respDeliver = requests.post(self.apiUri + 'Machine/'+ str(self.machineId) +'/CheckCreditsForDelivery', json={
                 'employeeId': int(consumeInfo['employeeId']),
@@ -204,7 +204,8 @@ class ApiManager():
             }, headers={ "Authorization": "Bearer " + self.token })
             if respDeliver.status_code == 200:
                 data = respDeliver.json()
-                returnVal = data['result']
+                returnVal[0] = data['result']
+                returnVal[1] = data['errorMessage']
         except Exception as e:
             pass
         return returnVal

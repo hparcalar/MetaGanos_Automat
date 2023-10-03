@@ -2,8 +2,8 @@ System.FormatException: The header contains invalid values at index 0: ''
    at Microsoft.Net.Http.Headers.HttpHeaderParser`1.ParseValue(StringSegment value, Int32& index)
    at Microsoft.Net.Http.Headers.MediaTypeHeaderValue.Parse(StringSegment input)
    at Microsoft.AspNetCore.Mvc.FileStreamResult..ctor(Stream fileStream, String contentType)
-   at MachManager.Controllers.MachineController.GetVideo(Int32 id) in D:\Projects\Software\MetaGanos_MachManager\Controllers\MachineController.cs:line 765
-   at lambda_method344(Closure , Object , Object[] )
+   at MachManager.Controllers.MachineController.GetVideo(Int32 id) in C:\Users\USER\Desktop\ButanMakina\MetaGanos_MachManager\Controllers\MachineController.cs:line 931
+   at lambda_method1148(Closure , Object , Object[] )
    at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
    at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
@@ -28,6 +28,6 @@ HEADERS
 Accept: */*
 Connection: keep-alive
 Host: localhost:5203
-User-Agent: python-requests/2.28.1
+User-Agent: python-requests/2.31.0
 Accept-Encoding: gzip, deflate
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3VzZXJkYXRhIjoiMiIsInVuaXF1ZV9uYW1lIjoiMDAxIiwicm9sZSI6Ik1hY2hpbmUiLCJuYmYiOjE2NzExNzQ0MzgsImV4cCI6MTY3MTI2MDgzOCwiaWF0IjoxNjcxMTc0NDM4fQ.DisdZ86K27vUD0qMvoVHU3WjVkaRm0H7xj1BeAQTHdU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3VzZXJkYXRhIjoiMjEiLCJ1bmlxdWVfbmFtZSI6IjY2NjYiLCJyb2xlIjoiTWFjaGluZSIsIm5iZiI6MTY5NjEwODM4MSwiZXhwIjoxNjk2MTk0NzgxLCJpYXQiOjE2OTYxMDgzODF9.9Oxz_B8XH6spMPGC_Vb0cKJMc7GGTZK4oHDOm_DBaGU

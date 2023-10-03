@@ -90,7 +90,7 @@ Item {
                     style: Text.Outline
                     styleColor:'#fff'
                     font.bold: true
-                    text: "MAKİNE BAŞLANGIÇ AYARLARI - V2.05"
+                    text: "MAKİNE AYARLARI - V2.06"
                 }
             }
 

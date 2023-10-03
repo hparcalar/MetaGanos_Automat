@@ -386,8 +386,8 @@ class BackendManager(QObject):
                         'spiralNo': int(spiralNo)
                     })
 
-            if not hasRights:
-                raise Exception("Bu ürün için yeterli krediniz bulunmamaktadır.")
+            if not hasRights[0]:
+                raise Exception(hasRights[1])
             else:
                 # tryCount = 0
                 pushResult = self.modbusManager.pushItem(spiralNo)
